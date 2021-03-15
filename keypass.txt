@@ -11,3 +11,8 @@ Email Address []:
 
 
 A challenge password []:alex_challenge
+
+
+server(pi) run compile
+
+g++ tls-server-lib/test_tls_server.cpp tls-server-lib/tls_server_lib.cpp tls-server-lib/tls_pthread.cpp tls-server-lib/make_tls_server.cpp tls-server-lib/tls_common_lib.cpp –pthread –lssl –lcrypto –o test_tls_server
