@@ -1,2 +1,2 @@
-tls-alex-client:
-	g++ tls-alex-client.cpp make_tls_client.cpp tls_client_lib.cpp tls_pthread.cpp tls_common_lib.cpp -pthread -lssl -lcrypto -o control
+tls-client:
+	g++ control.cpp client_lib/make_tls_client.cpp client_lib/tls_client_lib.cpp client_lib/tls_pthread.cpp client_lib/tls_common_lib.cpp -pthread -lssl -lcrypto -o control

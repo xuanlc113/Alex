@@ -1,0 +1,2 @@
+tls-server:
+	g++ Alex.cpp server_lib/tls_server_lib.cpp server_lib/tls_pthread.cpp server_lib/make_tls_server.cpp server_lib/tls_common_lib.cpp server_lib/serial.cpp server_lib/serialize.cpp -pthread -lssl -lcrypto -o alex
