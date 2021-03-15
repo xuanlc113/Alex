@@ -1,0 +1,9 @@
+CA key pass: alex
+
+Country Name (2 letter code) [AU]:SG
+State or Province Name (full name) [Some-State]:Sg
+Locality Name (eg, city) []:SG
+Organization Name (eg, company) [Internet Widgits Pty Ltd]:alex
+Organizational Unit Name (eg, section) []:alex1 
+Common Name (e.g. server FQDN or YOUR name) []:www.alex.com
+Email Address []:
