@@ -1,59 +1,64 @@
 #include "make_tls_client.h"
+
 // Our reader thread just reads the socket connection and prints it
-void *readerThread(void *conn)
-{
+void *readerThread(void *conn) {
     int exitReader = 0;
-    while (!exitReader)
-    {
+
+    while(!exitReader) {
         char buffer[128];
         int len = sslRead(conn, buffer, sizeof(buffer));
-        if (len < 0)
-        {
+
+        if(len < 0) {
             perror("Error reading socket: ");
         }
-        if (len > 0)
-        {
+
+        if(len > 0) {
             printf("\nReceived: %s\n", buffer);
         }
+
         exitReader = (len <= 0);
     }
+
     printf("Server closed connection. Exiting.\n");
     stopClient();
     EXIT_THREAD(conn);
 }
 
-void *writerThread(void *conn)
-{
+void *writerThread(void *conn) {
+
     int exitWriter = 0;
-    while (!exitWriter)
-    {
+
+    while(!exitWriter) {
+
         char buffer[128];
         printf("Input: ");
         fgets(buffer, 128, stdin);
         printf("\n");
+
         int len = sslWrite(conn, buffer, sizeof(buffer));
-        if (len < 0)
-        {
+
+        if(len < 0) {
             perror("Error writing to server: ");
         }
+
         exitWriter = (len <= 0);
     }
+
     printf("writer: Server closed connection. Exiting.\n");
     stopClient();
     EXIT_THREAD(conn);
 }
 
 #define SERVER_NAME "localhost"
+#define CA_CERT_FNAME "signing.pem"
 #define PORT_NUM 5000
-#define CA_CERT_FNAME "cert/signing.pem"
-#define CLIENT_CERT_FNAME "controlkey/laptop.crt"
-#define CLIENT_KEY_FNAME "controlkey/laptop.key"
-#define SERVER_NAME_ON_CERT "www.alex.com"
+#define CLIENT_CERT_FNAME "laptop.crt"
+#define CLIENT_KEY_FNAME "laptop.key"
+#define SERVER_NAME_ON_CERT "alex.epp.com"
 
-int main()
-{
-    createClient(SERVER_NAME, PORT_NUM, 1, CA_CERT_FNAME, SERVER_NAME_ON_CERT, 1,
-                 CLIENT_CERT_FNAME, CLIENT_KEY_FNAME, readerThread, writerThread);
-    while (client_is_running())
-        ;
+int main() {
+
+    createClient(SERVER_NAME, PORT_NUM, 1, CA_CERT_FNAME, SERVER_NAME_ON_CERT, 1, CLIENT_CERT_FNAME, CLIENT_KEY_FNAME, readerThread, writerThread);
+
+    while(client_is_running());
 }
