@@ -9,34 +9,34 @@
 #include "constants.h"
 
 // Tells us that the network is running.
-static volatile int networkActive=0;
+static volatile int networkActive = 0;
 
 void handleError(const char *buffer)
 {
-	switch(buffer[1])
+	switch (buffer[1])
 	{
-		case RESP_OK:
-			printf("Command / Status OK\n");
-			break;
+	case RESP_OK:
+		printf("Command / Status OK\n");
+		break;
 
-		case RESP_BAD_PACKET:
-			printf("BAD MAGIC NUMBER FROM ARDUINO\n");
-			break;
+	case RESP_BAD_PACKET:
+		printf("BAD MAGIC NUMBER FROM ARDUINO\n");
+		break;
 
-		case RESP_BAD_CHECKSUM:
-			printf("BAD CHECKSUM FROM ARDUINO\n");
-			break;
+	case RESP_BAD_CHECKSUM:
+		printf("BAD CHECKSUM FROM ARDUINO\n");
+		break;
 
-		case RESP_BAD_COMMAND:
-			printf("PI SENT BAD COMMAND TO ARDUINO\n");
-			break;
+	case RESP_BAD_COMMAND:
+		printf("PI SENT BAD COMMAND TO ARDUINO\n");
+		break;
 
-		case RESP_BAD_RESPONSE:
-			printf("PI GOT BAD RESPONSE FROM ARDUINO\n");
-			break;
+	case RESP_BAD_RESPONSE:
+		printf("PI GOT BAD RESPONSE FROM ARDUINO\n");
+		break;
 
-		default:
-			printf("PI IS CONFUSED!\n");
+	default:
+		printf("PI IS CONFUSED!\n");
 	}
 }
 
@@ -76,21 +76,21 @@ void handleNetwork(const char *buffer, int len)
 	// The first byte is the packet type
 	int type = buffer[0];
 
-	switch(type)
+	switch (type)
 	{
-		case NET_ERROR_PACKET:
+	case NET_ERROR_PACKET:
 		handleError(buffer);
 		break;
 
-		case NET_STATUS_PACKET:
+	case NET_STATUS_PACKET:
 		handleStatus(buffer);
 		break;
 
-		case NET_MESSAGE_PACKET:
+	case NET_MESSAGE_PACKET:
 		handleMessage(buffer);
 		break;
 
-		case NET_COMMAND_PACKET:
+	case NET_COMMAND_PACKET:
 		handleCommand(buffer);
 		break;
 	}
@@ -100,12 +100,12 @@ void sendData(void *conn, const char *buffer, int len)
 {
 	int c;
 	printf("\nSENDING %d BYTES DATA\n\n", len);
-	if(networkActive)
+	if (networkActive)
 	{
 		/* TODO: Insert SSL write here to write buffer to network */
+		c = sslWrite(conn, buffer, len);
 
-
-		/* END TODO */	
+		/* END TODO */
 		networkActive = (c > 0);
 	}
 }
@@ -115,32 +115,34 @@ void *readerThread(void *conn)
 	char buffer[128];
 	int len;
 
-	while(networkActive)
+	while (networkActive)
 	{
 		/* TODO: Insert SSL read here into buffer */
+		len = sslRead(conn, buffer, sizeof(buffer));
+		printf("read %d bytes from server.\n", len);
 
-        printf("read %d bytes from server.\n", len);
-		
 		/* END TODO */
 
 		networkActive = (len > 0);
 
-		if(networkActive)
+		if (networkActive)
 			handleNetwork(buffer, len);
 	}
 
 	printf("Exiting network listener thread\n");
-    
-    /* TODO: Stop the client loop and call EXIT_THREAD */
 
-    /* END TODO */
+	/* TODO: Stop the client loop and call EXIT_THREAD */
+	stopClient();
+	EXIT_THREAD(conn);
+	/* END TODO */
 }
 
 void flushInput()
 {
 	char c;
 
-	while((c = getchar()) != '\n' && c != EOF);
+	while ((c = getchar()) != '\n' && c != EOF)
+		;
 }
 
 void getParams(int32_t *params)
@@ -153,9 +155,9 @@ void getParams(int32_t *params)
 
 void *writerThread(void *conn)
 {
-	int quit=0;
+	int quit = 0;
 
-	while(!quit)
+	while (!quit)
 	{
 		char ch;
 		printf("Command (f=forward, b=reverse, l=turn left, r=turn right, s=stop, c=clear stats, g=get stats q=exit)\n");
@@ -168,77 +170,82 @@ void *writerThread(void *conn)
 		int32_t params[2];
 
 		buffer[0] = NET_COMMAND_PACKET;
-		switch(ch)
+		switch (ch)
 		{
-			case 'f':
-			case 'F':
-			case 'b':
-			case 'B':
-			case 'l':
-			case 'L':
-			case 'r':
-			case 'R':
-						getParams(params);
-						buffer[1] = ch;
-						memcpy(&buffer[2], params, sizeof(params));
-						sendData(conn, buffer, sizeof(buffer));
-						break;
-			case 's':
-			case 'S':
-			case 'c':
-			case 'C':
-			case 'g':
-			case 'G':
-					params[0]=0;
-					params[1]=0;
-					memcpy(&buffer[2], params, sizeof(params));
-					buffer[1] = ch;
-					sendData(conn, buffer, sizeof(buffer));
-					break;
-			case 'q':
-			case 'Q':
-				quit=1;
-				break;
-			default:
-				printf("BAD COMMAND\n");
+		case 'f':
+		case 'F':
+		case 'b':
+		case 'B':
+		case 'l':
+		case 'L':
+		case 'r':
+		case 'R':
+			getParams(params);
+			buffer[1] = ch;
+			memcpy(&buffer[2], params, sizeof(params));
+			sendData(conn, buffer, sizeof(buffer));
+			break;
+		case 's':
+		case 'S':
+		case 'c':
+		case 'C':
+		case 'g':
+		case 'G':
+			params[0] = 0;
+			params[1] = 0;
+			memcpy(&buffer[2], params, sizeof(params));
+			buffer[1] = ch;
+			sendData(conn, buffer, sizeof(buffer));
+			break;
+		case 'q':
+		case 'Q':
+			quit = 1;
+			break;
+		default:
+			printf("BAD COMMAND\n");
 		}
 	}
 
 	printf("Exiting keyboard thread\n");
 
-    /* TODO: Stop the client loop and call EXIT_THREAD */
-
-    /* END TODO */
+	/* TODO: Stop the client loop and call EXIT_THREAD */
+	stopClient();
+	EXIT_THREAD(conn);
+	/* END TODO */
 }
 
 /* TODO: #define filenames for the client private key, certificatea,
    CA filename, etc. that you need to create a client */
 
-
+#define CA_CERT_FNAME "cert/signing.pem"
+#define CLIENT_CERT_FNAME "controlkey/laptop.crt"
+#define CLIENT_KEY_FNAME "controlkey/laptop.key"
+#define SERVER_NAME_ON_CERT "www.alex.com"
 /* END TODO */
 void connectToServer(const char *serverName, int portNum)
 {
-    /* TODO: Create a new client */
-
-    /* END TODO */
+	/* TODO: Create a new client */
+	createClient(serverName, portNum, 1, CA_CERT_FNAME, SERVER_NAME_ON_CERT, 1, CLIENT_CERT_FNAME, CLIENT_KEY_FNAME, readerThread, writerThread);
+	/* END TODO */
 }
 
 int main(int ac, char **av)
 {
-	if(ac != 3)
+	if (ac != 3)
 	{
 		fprintf(stderr, "\n\n%s <IP address> <Port Number>\n\n", av[0]);
 		exit(-1);
 	}
 
-    networkActive = 1;
-    connectToServer(av[1], atoi(av[2]));
+	networkActive = 1;
+	connectToServer(av[1], atoi(av[2]));
 
-    /* TODO: Add in while loop to prevent main from exiting while the
+	/* TODO: Add in while loop to prevent main from exiting while the
     client loop is running */
 
+	while (client_is_running())
+		;
 
-
-    /* END TODO */
+	/* END TODO */
 	printf("\nMAIN exiting\n\n");
 }
