@@ -21,7 +21,7 @@
 #define KEY_FNAME "pikey/alex.key"
 #define CERT_FNAME "pikey/alex.crt"
 #define CA_CERT_FNAME "cert/signing.pem"
-#define CLIENT_NAME "www.alex.com"
+#define CLIENT_NAME "www.control.com"
 
 /* END TODO */
 
