@@ -1,10 +1,10 @@
-#include "make_tls_server.h"
-#include "tls_common_lib.h"
-#include "netconstants.h"
-#include "constants.h"
-#include "packet.h"
-#include "serial.h"
-#include "serialize.h"
+#include "tls_lib/make_tls_server.h"
+#include "tls_lib/tls_common_lib.h"
+#include "tls_lib/netconstants.h"
+#include "tls_lib/constants.h"
+#include "tls_lib/packet.h"
+#include "tls_lib/serial.h"
+#include "tls_lib/serialize.h"
 
 /* TODO: Set PORT_NAME to the port name of your Arduino */
 #define PORT_NAME "/dev/ttyACM0"
