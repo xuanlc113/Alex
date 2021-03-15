@@ -7,3 +7,7 @@ Organization Name (eg, company) [Internet Widgits Pty Ltd]:alex
 Organizational Unit Name (eg, section) []:alex1 
 Common Name (e.g. server FQDN or YOUR name) []:www.alex.com
 Email Address []:
+
+
+
+A challenge password []:alex_challenge
