@@ -6,8 +6,6 @@
 #include "server_lib/serial.h"
 #include "server_lib/serialize.h"
 
-#include "uart_handler.h"
-
 // Arduino
 #define PORT_NAME "/dev/ttyACM0"
 #define BAUD_RATE B57600
@@ -264,8 +262,10 @@ int main()
     printf("\nALEX REMOTE SUBSYSTEM\n\n");
 
     printf("Opening Serial Port\n");
-    // Open the serial port
+
+    // connect to arduino
     startSerial(PORT_NAME, BAUD_RATE, 8, 'N', 1, 5);
+
     printf("Done. Waiting 3 seconds for Arduino to reboot\n");
     sleep(3);
 
