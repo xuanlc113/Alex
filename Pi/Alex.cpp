@@ -6,32 +6,25 @@
 #include "server_lib/serial.h"
 #include "server_lib/serialize.h"
 
-/* TODO: Set PORT_NAME to the port name of your Arduino */
-#define PORT_NAME "/dev/ttyACM0"
-/* END TODO */
+#include "uart_handler.h"
 
+// Arduino
+#define PORT_NAME "/dev/ttyACM0"
 #define BAUD_RATE B57600
 
 // TLS Port Number
 #define SERVER_PORT 5000
 
-/* TODO: #define constants for the  filenames for Alex's private key, certificate, CA certificate name,
-        and the Common Name for your laptop */
-
+// CA Keys
 #define KEY_FNAME "pikey/alex.key"
 #define CERT_FNAME "pikey/alex.crt"
 #define CA_CERT_FNAME "cert/signing.pem"
 #define CLIENT_NAME "www.control.com"
 
-/* END TODO */
-
-// Our network buffer consists of 1 byte of packet type, and 128 bytes of data
+// TLS Buffer
 #define BUF_LEN 129
 
-// This variable shows whether a network connection is active
-// We will also use this variable to prevent the server from serving
-// more than one connection, to keep connection management simple.
-
+// TLS network active flag
 static volatile int networkActive;
 
 // This variable is used by sendNetworkData to send back responses
@@ -40,9 +33,7 @@ static volatile int networkActive;
 static void *tls_conn = NULL;
 
 /*
-
 	Alex Serial Routines to the Arduino
-
 	*/
 
 // Prototype for sendNetworkData
@@ -144,40 +135,8 @@ void handleError(TResult error)
     }
 }
 
-void *uartReceiveThread(void *p)
-{
-    char buffer[PACKET_SIZE];
-    int len;
-    TPacket packet;
-    TResult result;
-    int counter = 0;
-
-    while (1)
-    {
-        len = serialRead(buffer);
-        counter += len;
-        if (len > 0)
-        {
-            result = deserialize(buffer, len, &packet);
-
-            if (result == PACKET_OK)
-            {
-                counter = 0;
-                handleUARTPacket(&packet);
-            }
-            else if (result != PACKET_INCOMPLETE)
-            {
-                printf("PACKET ERROR\n");
-                handleError(result);
-            } // result
-        }     // len > 0
-    }         // while
-}
-
 /*
-
 	Alex Network Routines
-
 	*/
 
 void sendNetworkData(const char *data, int len)
@@ -286,31 +245,6 @@ void handleNetworkData(void *conn, const char *buffer, int len)
         handleCommand(conn, buffer);
 }
 
-void *worker(void *conn)
-{
-    int len;
-
-    char buffer[BUF_LEN];
-
-    while (networkActive)
-    {
-        /* TODO: Implement SSL read into buffer */
-        len = sslRead(conn, buffer, sizeof(buffer));
-        /* END TODO */
-        // As long as we are getting data, network is active
-        networkActive = (len > 0);
-
-        if (len > 0)
-            handleNetworkData(conn, buffer, len);
-        else if (len < 0)
-            perror("ERROR READING NETWORK: ");
-    }
-
-    // Reset tls_conn to NULL.
-    tls_conn = NULL;
-    EXIT_THREAD(conn);
-}
-
 void sendHello()
 {
     // Send a hello packet
@@ -342,16 +276,66 @@ int main()
 
     networkActive = 1;
 
-    /* TODO: Call createServer with the necessary parameters to do client authentication and to send
-        Alex's certificate. Use the #define names you defined earlier  */
     createServer(KEY_FNAME, CERT_FNAME, SERVER_PORT, &worker, CA_CERT_FNAME, CLIENT_NAME, 1);
-    /* TODO END */
 
     printf("DONE. Sending HELLO to Arduino\n");
     sendHello();
     printf("DONE.\n");
 
-    // Loop while the server is active
     while (server_is_running())
         ;
+}
+
+// tls thread
+void *worker(void *conn)
+{
+    int len;
+
+    char buffer[BUF_LEN];
+
+    while (networkActive)
+    {
+        len = sslRead(conn, buffer, sizeof(buffer));
+
+        networkActive = (len > 0);
+
+        if (len > 0)
+            handleNetworkData(conn, buffer, len);
+        else if (len < 0)
+            perror("ERROR READING NETWORK: ");
+    }
+
+    tls_conn = NULL;
+    EXIT_THREAD(conn);
+}
+
+// arduino thread
+void *uartReceiveThread(void *p)
+{
+    char buffer[PACKET_SIZE];
+    int len;
+    TPacket packet;
+    TResult result;
+    int counter = 0;
+
+    while (1)
+    {
+        len = serialRead(buffer);
+        counter += len;
+        if (len > 0)
+        {
+            result = deserialize(buffer, len, &packet);
+
+            if (result == PACKET_OK)
+            {
+                counter = 0;
+                handleUARTPacket(&packet);
+            }
+            else if (result != PACKET_INCOMPLETE)
+            {
+                printf("PACKET ERROR\n");
+                handleError(result);
+            } // result
+        }     // len > 0
+    }         // while
 }

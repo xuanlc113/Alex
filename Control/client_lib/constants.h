@@ -21,13 +21,12 @@ typedef enum
 typedef enum
 {
   RESP_OK = 0,
-  RESP_STATUS=1,
+  RESP_STATUS = 1,
   RESP_BAD_PACKET = 2,
   RESP_BAD_CHECKSUM = 3,
   RESP_BAD_COMMAND = 4,
-  RESP_BAD_RESPONSE = 5 
+  RESP_BAD_RESPONSE = 5
 } TResponseType;
-
 
 // Commands
 // For direction commands, param[0] = distance in cm to move
@@ -44,3 +43,11 @@ typedef enum
 } TCommandType;
 #endif
 
+// DTO
+typedef enum {
+
+  command : enum command_type;
+  status : pass / fail
+}
+
+// handle telemetry data on receive *not sent

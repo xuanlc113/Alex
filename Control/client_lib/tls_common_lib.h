@@ -13,7 +13,6 @@
 #include <errno.h>
 #include <sys/types.h>
 
-
 /** These routines are not generally called from within reader/writer
     threads.  In the event a function that requires an SSL structure
     to be passed in, the reader/writer thread should cast its conn
@@ -38,7 +37,7 @@ SSL_CTX *create_context(const char *CACertName, int verifyPeer, int isServer);
 
 void printCertificate(SSL *ssl);
 
-// This function verifies the certificate. Returns TRUE if 
+// This function verifies the certificate. Returns TRUE if
 // the certificate is valid
 int verifyCertificate(SSL *ssl);
 
@@ -74,5 +73,7 @@ int sslRead(void *conn, char *buffer, int len);
 
 // Call this when exiting from a worker, reader or writer thread. This cleans
 // up the thread environment.
-#define EXIT_THREAD(conn) SSL_free((SSL *) conn); pthread_exit(NULL)
+#define EXIT_THREAD(conn)  \
+    SSL_free((SSL *)conn); \
+    pthread_exit(NULL)
 #endif
