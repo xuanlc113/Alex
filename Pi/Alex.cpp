@@ -1,10 +1,10 @@
-#include "server_lib/make_tls_server.h"
-#include "server_lib/tls_common_lib.h"
-#include "server_lib/netconstants.h"
 #include "server_lib/constants.h"
+#include "server_lib/make_tls_server.h"
+#include "server_lib/netconstants.h"
 #include "server_lib/packet.h"
 #include "server_lib/serial.h"
 #include "server_lib/serialize.h"
+#include "server_lib/tls_common_lib.h"
 
 // Arduino
 #define PORT_NAME "/dev/ttyACM0"
@@ -31,14 +31,13 @@ static volatile int networkActive;
 static void *tls_conn = NULL;
 
 /*
-	Alex Serial Routines to the Arduino
-	*/
+        Alex Serial Routines to the Arduino
+        */
 
 // Prototype for sendNetworkData
 void sendNetworkData(const char *, int);
 
-void handleErrorResponse(TPacket *packet)
-{
+void handleErrorResponse(TPacket *packet) {
     printf("UART ERROR: %d\n", packet->command);
     char buffer[2];
     buffer[0] = NET_ERROR_PACKET;
@@ -46,8 +45,7 @@ void handleErrorResponse(TPacket *packet)
     sendNetworkData(buffer, sizeof(buffer));
 }
 
-void handleMessage(TPacket *packet)
-{
+void handleMessage(TPacket *packet) {
     char data[33];
     printf("UART MESSAGE PACKET: %s\n", packet->data);
     data[0] = NET_MESSAGE_PACKET;
@@ -55,8 +53,7 @@ void handleMessage(TPacket *packet)
     sendNetworkData(data, sizeof(data));
 }
 
-void handleStatus(TPacket *packet)
-{
+void handleStatus(TPacket *packet) {
     char data[65];
     printf("UART STATUS PACKET\n");
     data[0] = NET_STATUS_PACKET;
@@ -64,94 +61,85 @@ void handleStatus(TPacket *packet)
     sendNetworkData(data, sizeof(data));
 }
 
-void handleResponse(TPacket *packet)
-{
+void handleResponse(TPacket *packet) {
     // The response code is stored in command
-    switch (packet->command)
-    {
-    case RESP_OK:
-        char resp[2];
-        printf("Command OK\n");
-        resp[0] = NET_ERROR_PACKET;
-        resp[1] = RESP_OK;
-        sendNetworkData(resp, sizeof(resp));
-        break;
+    switch (packet->command) {
+        case RESP_OK:
+            char resp[2];
+            printf("Command OK\n");
+            resp[0] = NET_ERROR_PACKET;
+            resp[1] = RESP_OK;
+            sendNetworkData(resp, sizeof(resp));
+            break;
 
-    case RESP_STATUS:
-        handleStatus(packet);
-        break;
+        case RESP_STATUS:
+            handleStatus(packet);
+            break;
 
-    default:
-        printf("Boo\n");
+        default:
+            printf("Boo\n");
     }
 }
 
-void handleUARTPacket(TPacket *packet)
-{
-    switch (packet->packetType)
-    {
-    case PACKET_TYPE_COMMAND:
-        // Only we send command packets, so ignore
-        break;
+void handleUARTPacket(TPacket *packet) {
+    switch (packet->packetType) {
+        case PACKET_TYPE_COMMAND:
+            // Only we send command packets, so ignore
+            break;
 
-    case PACKET_TYPE_RESPONSE:
-        handleResponse(packet);
-        break;
+        case PACKET_TYPE_RESPONSE:
+            handleResponse(packet);
+            break;
 
-    case PACKET_TYPE_ERROR:
-        handleErrorResponse(packet);
-        break;
+        case PACKET_TYPE_ERROR:
+            handleErrorResponse(packet);
+            break;
 
-    case PACKET_TYPE_MESSAGE:
-        handleMessage(packet);
-        break;
+        case PACKET_TYPE_MESSAGE:
+            handleMessage(packet);
+            break;
     }
 }
 
-void uartSendPacket(TPacket *packet)
-{
+void uartSendPacket(TPacket *packet) {
     char buffer[PACKET_SIZE];
     int len = serialize(buffer, packet, sizeof(TPacket));
 
     serialWrite(buffer, len);
 }
 
-void handleError(TResult error)
-{
-    switch (error)
-    {
-    case PACKET_BAD:
-        printf("ERROR: Bad Magic Number\n");
-        break;
+void handleError(TResult error) {
+    switch (error) {
+        case PACKET_BAD:
+            printf("ERROR: Bad Magic Number\n");
+            break;
 
-    case PACKET_CHECKSUM_BAD:
-        printf("ERROR: Bad checksum\n");
-        break;
+        case PACKET_CHECKSUM_BAD:
+            printf("ERROR: Bad checksum\n");
+            break;
 
-    default:
-        printf("ERROR: UNKNOWN ERROR\n");
+        default:
+            printf("ERROR: UNKNOWN ERROR\n");
     }
 }
 
 /*
-	Alex Network Routines
-	*/
+        Alex Network Routines
+        */
 
-void sendNetworkData(const char *data, int len)
-{
+void sendNetworkData(const char *data, int len) {
     // Send only if network is active
-    if (networkActive)
-    {
-        // Use this to store the number of bytes actually written to the TLS connection.
+    if (networkActive) {
+        // Use this to store the number of bytes actually written to the TLS
+        // connection.
         int c;
 
         printf("WRITING TO CLIENT\n");
 
-        if (tls_conn != NULL)
-        {
-            /* TODO: Implement SSL write here to write data to the network. Note that
-              handleNetworkData should already have set tls_conn to point to the TLS
-              connection we want to write to. */
+        if (tls_conn != NULL) {
+            /* TODO: Implement SSL write here to write data to the network. Note
+              that handleNetworkData should already have set tls_conn to point
+              to the TLS connection we want to write to. */
             sslWrite(tls_conn, data, len);
             /* END TODO */
         }
@@ -161,8 +149,7 @@ void sendNetworkData(const char *data, int len)
     }
 }
 
-void handleCommand(void *conn, const char *buffer)
-{
+void handleCommand(void *conn, const char *buffer) {
     // The first byte contains the command
     char cmd = buffer[1];
     uint32_t cmdParam[2];
@@ -178,73 +165,69 @@ void handleCommand(void *conn, const char *buffer)
 
     printf("COMMAND RECEIVED: %c %d %d\n", cmd, cmdParam[0], cmdParam[1]);
 
-    switch (cmd)
-    {
-    case 'f':
-    case 'F':
-        commandPacket.command = COMMAND_FORWARD;
-        uartSendPacket(&commandPacket);
-        break;
+    switch (cmd) {
+        case 'f':
+        case 'F':
+            commandPacket.command = COMMAND_FORWARD;
+            uartSendPacket(&commandPacket);
+            break;
 
-    case 'b':
-    case 'B':
-        commandPacket.command = COMMAND_REVERSE;
-        uartSendPacket(&commandPacket);
-        break;
+        case 'b':
+        case 'B':
+            commandPacket.command = COMMAND_REVERSE;
+            uartSendPacket(&commandPacket);
+            break;
 
-    case 'l':
-    case 'L':
-        commandPacket.command = COMMAND_TURN_LEFT;
-        uartSendPacket(&commandPacket);
-        break;
+        case 'l':
+        case 'L':
+            commandPacket.command = COMMAND_TURN_LEFT;
+            uartSendPacket(&commandPacket);
+            break;
 
-    case 'r':
-    case 'R':
-        commandPacket.command = COMMAND_TURN_RIGHT;
-        uartSendPacket(&commandPacket);
-        break;
+        case 'r':
+        case 'R':
+            commandPacket.command = COMMAND_TURN_RIGHT;
+            uartSendPacket(&commandPacket);
+            break;
 
-    case 's':
-    case 'S':
-        commandPacket.command = COMMAND_STOP;
-        uartSendPacket(&commandPacket);
-        break;
+        case 's':
+        case 'S':
+            commandPacket.command = COMMAND_STOP;
+            uartSendPacket(&commandPacket);
+            break;
 
-    case 'c':
-    case 'C':
-        commandPacket.command = COMMAND_CLEAR_STATS;
-        commandPacket.params[0] = 0;
-        uartSendPacket(&commandPacket);
-        break;
+        case 'c':
+        case 'C':
+            commandPacket.command = COMMAND_CLEAR_STATS;
+            commandPacket.params[0] = 0;
+            uartSendPacket(&commandPacket);
+            break;
 
-    case 'g':
-    case 'G':
-        commandPacket.command = COMMAND_GET_STATS;
-        uartSendPacket(&commandPacket);
-        break;
+        case 'g':
+        case 'G':
+            commandPacket.command = COMMAND_GET_STATS;
+            uartSendPacket(&commandPacket);
+            break;
 
-    default:
-        printf("Bad command\n");
+        default:
+            printf("Bad command\n");
     }
 }
 
-void handleNetworkData(void *conn, const char *buffer, int len)
-{
-    /* Note: A problem with our design is that we actually get data to be written
-        to the SSL network from the serial port. I.e. we send a command to the Arduino,
-        get back a status, then write to the TLS connection.  So we do a hack:
-        we assume that whatever we get back from the Arduino is meant for the most
-        recent client, so we just simply store conn, which contains the TLS
-        connection, in a global variable called tls_conn */
+void handleNetworkData(void *conn, const char *buffer, int len) {
+    /* Note: A problem with our design is that we actually get data to be
+       written to the SSL network from the serial port. I.e. we send a command
+       to the Arduino, get back a status, then write to the TLS connection.  So
+       we do a hack: we assume that whatever we get back from the Arduino is
+       meant for the most recent client, so we just simply store conn, which
+       contains the TLS connection, in a global variable called tls_conn */
 
-    tls_conn = conn; // This is used by sendNetworkData
+    tls_conn = conn;  // This is used by sendNetworkData
 
-    if (buffer[0] == NET_COMMAND_PACKET)
-        handleCommand(conn, buffer);
+    if (buffer[0] == NET_COMMAND_PACKET) handleCommand(conn, buffer);
 }
 
-void sendHello()
-{
+void sendHello() {
     // Send a hello packet
     TPacket helloPacket;
 
@@ -252,11 +235,7 @@ void sendHello()
     uartSendPacket(&helloPacket);
 }
 
-int main()
-{
-    // Start the uartReceiveThread. The network thread is started by
-    // createServer
-
+int main() {
     pthread_t serThread;
 
     printf("\nALEX REMOTE SUBSYSTEM\n\n");
@@ -276,6 +255,7 @@ int main()
 
     networkActive = 1;
 
+    // connect to laptop
     createServer(KEY_FNAME, CERT_FNAME, SERVER_PORT, &worker, CA_CERT_FNAME, CLIENT_NAME, 1);
 
     printf("DONE. Sending HELLO to Arduino\n");
@@ -287,20 +267,20 @@ int main()
 }
 
 // tls thread
-void *worker(void *conn)
-{
+void *worker(void *conn) {
     int len;
-
     char buffer[BUF_LEN];
 
-    while (networkActive)
-    {
-        len = sslRead(conn, buffer, sizeof(buffer));
+    while (networkActive) {
+        len = sslRead(conn, buffer, sizeof(buffer));  // copy 129 bytes into buffer
 
         networkActive = (len > 0);
 
-        if (len > 0)
-            handleNetworkData(conn, buffer, len);
+        if (len > 0) {
+            printf("received command: %c\n", buffer[1]);  // testing
+            // handleNetworkData(conn, buffer, len);
+        }
+
         else if (len < 0)
             perror("ERROR READING NETWORK: ");
     }
@@ -310,32 +290,26 @@ void *worker(void *conn)
 }
 
 // arduino thread
-void *uartReceiveThread(void *p)
-{
+void *uartReceiveThread(void *p) {
     char buffer[PACKET_SIZE];
     int len;
     TPacket packet;
     TResult result;
     int counter = 0;
 
-    while (1)
-    {
-        len = serialRead(buffer);
+    while (1) {
+        len = serialRead(buffer);  // put into buffer
         counter += len;
-        if (len > 0)
-        {
-            result = deserialize(buffer, len, &packet);
+        if (len > 0) {
+            result = deserialize(buffer, len, &packet);  // put into packet
 
-            if (result == PACKET_OK)
-            {
+            if (result == PACKET_OK) {
                 counter = 0;
                 handleUARTPacket(&packet);
-            }
-            else if (result != PACKET_INCOMPLETE)
-            {
+            } else if (result != PACKET_INCOMPLETE) {
                 printf("PACKET ERROR\n");
                 handleError(result);
-            } // result
-        }     // len > 0
-    }         // while
+            }
+        }
+    }
 }
