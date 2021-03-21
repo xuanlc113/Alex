@@ -134,9 +134,10 @@ void sendNetworkData(const char *data, int len) {
         // connection.
         int c;
 
-        printf("WRITING TO CLIENT\n");
+        // printf("WRITING TO CLIENT\n");
 
         if (tls_conn != NULL) {
+            printf("WRITING TO CLIENT\n");
             /* TODO: Implement SSL write here to write data to the network. Note
               that handleNetworkData should already have set tls_conn to point
               to the TLS connection we want to write to. */
@@ -248,6 +249,13 @@ void *worker(void *conn) {
         if (len > 0) {
             printf("received command: %c\n", buffer[1]);  // testing
             // handleNetworkData(conn, buffer, len);
+            if (buffer[1] == 'c') {
+                char data[2];
+                data[0] = NET_MESSAGE_PACKET;
+                data[1] = 'p';
+                tls_conn = conn;
+                sendNetworkData(data, sizeof(data));
+            }
         }
 
         else if (len < 0)

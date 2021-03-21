@@ -145,13 +145,13 @@ void *writerThread(void *conn) {
     int quit = 0;
 
     // test
+    system("/bin/stty cbreak");
+
     printf("Command (q=exit)\n");
     while (!quit) {
-        system("/bin/stty raw");
         char ch;
         // scanf("%c", &ch);
         ch = getchar();
-
         // Purge extraneous characters from input stream
         // flushInput(); //remove flush for continuous input
 
@@ -167,8 +167,9 @@ void *writerThread(void *conn) {
                 buffer[1] = ch;
                 sendData(conn, buffer, sizeof(buffer));
         }
-        system("/bin/stty cooked");
     }
+
+    system("/bin/stty cooked");
 
     // while (!quit) {
     //     char ch;
