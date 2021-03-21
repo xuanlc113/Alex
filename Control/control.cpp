@@ -145,80 +145,81 @@ void *writerThread(void *conn) {
     int quit = 0;
 
     // test
-    // while (!quit) {
-    //     char ch;
-    //     printf("Command (q=exit)\n");
-    //     scanf("%c", &ch);
-    //     // ch = getchar();
-
-    //     // Purge extraneous characters from input stream
-    //     flushInput();
-
-    //     char buffer[2];
-
-    //     buffer[0] = NET_COMMAND_PACKET;
-    //     switch (ch) {
-    //         case 'q':
-    //         case 'Q':
-    //             quit = 1;
-    //             break;
-    //         default:
-    //             buffer[0] = ch;
-    //     }
-    // }
-
     while (!quit) {
         char ch;
-        printf(
-            "Command (f=forward, b=reverse, l=turn left, r=turn right, s=stop, "
-            "c=clear stats, g=get stats q=exit)\n");
+        printf("Command (q=exit)\n");
         scanf("%c", &ch);
         // ch = getchar();
 
         // Purge extraneous characters from input stream
         flushInput();
 
-        char buffer[10];
-        int32_t params[2];
+        char buffer[2];
 
         buffer[0] = NET_COMMAND_PACKET;
         switch (ch) {
-            case 'f':
-            case 'F':
-            case 'b':
-            case 'B':
-            case 'l':
-            case 'L':
-            case 'r':
-            case 'R':
-                getParams(params);
-                params[0] = 100;
-                params[1] = 100;
-                flushInput();
-                buffer[1] = ch;
-                memcpy(&buffer[2], params, sizeof(params));
-                sendData(conn, buffer, sizeof(buffer));
-                break;
-            case 's':
-            case 'S':
-            case 'c':
-            case 'C':
-            case 'g':
-            case 'G':
-                params[0] = 0;
-                params[1] = 0;
-                memcpy(&buffer[2], params, sizeof(params));
-                buffer[1] = ch;
-                sendData(conn, buffer, sizeof(buffer));
-                break;
             case 'q':
             case 'Q':
                 quit = 1;
                 break;
             default:
-                printf("BAD COMMAND\n");
+                buffer[1] = ch;
+                sendData(conn, buffer, sizeof(buffer));
         }
     }
+
+    // while (!quit) {
+    //     char ch;
+    //     printf(
+    //         "Command (f=forward, b=reverse, l=turn left, r=turn right, s=stop, "
+    //         "c=clear stats, g=get stats q=exit)\n");
+    //     scanf("%c", &ch);
+    //     // ch = getchar();
+
+    //     // Purge extraneous characters from input stream
+    //     flushInput();
+
+    //     char buffer[10];
+    //     int32_t params[2];
+
+    //     buffer[0] = NET_COMMAND_PACKET;
+    //     switch (ch) {
+    //         case 'f':
+    //         case 'F':
+    //         case 'b':
+    //         case 'B':
+    //         case 'l':
+    //         case 'L':
+    //         case 'r':
+    //         case 'R':
+    //             getParams(params);
+    //             params[0] = 100;
+    //             params[1] = 100;
+    //             flushInput();
+    //             buffer[1] = ch;
+    //             memcpy(&buffer[2], params, sizeof(params));
+    //             sendData(conn, buffer, sizeof(buffer));
+    //             break;
+    //         case 's':
+    //         case 'S':
+    //         case 'c':
+    //         case 'C':
+    //         case 'g':
+    //         case 'G':
+    //             params[0] = 0;
+    //             params[1] = 0;
+    //             memcpy(&buffer[2], params, sizeof(params));
+    //             buffer[1] = ch;
+    //             sendData(conn, buffer, sizeof(buffer));
+    //             break;
+    //         case 'q':
+    //         case 'Q':
+    //             quit = 1;
+    //             break;
+    //         default:
+    //             printf("BAD COMMAND\n");
+    //     }
+    // }
 
     printf("Exiting keyboard thread\n");
 
