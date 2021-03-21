@@ -246,8 +246,8 @@ void *worker(void *conn) {
         networkActive = (len > 0);
 
         if (len > 0) {
-            printf("received command: %c\n", buffer[1]);  // testing
-            // handleNetworkData(conn, buffer, len);
+            // printf("received command: %c\n", buffer[1]);  // testing
+            handleNetworkData(conn, buffer, len);
         }
 
         else if (len < 0)
