@@ -235,37 +235,6 @@ void sendHello() {
     uartSendPacket(&helloPacket);
 }
 
-int main() {
-    pthread_t serThread;
-
-    printf("\nALEX REMOTE SUBSYSTEM\n\n");
-
-    printf("Opening Serial Port\n");
-
-    // connect to arduino
-    startSerial(PORT_NAME, BAUD_RATE, 8, 'N', 1, 5);
-
-    printf("Done. Waiting 3 seconds for Arduino to reboot\n");
-    sleep(3);
-
-    printf("DONE. Starting Serial Listener\n");
-    pthread_create(&serThread, NULL, uartReceiveThread, NULL);
-
-    printf("Starting Alex Server\n");
-
-    networkActive = 1;
-
-    // connect to laptop
-    createServer(KEY_FNAME, CERT_FNAME, SERVER_PORT, &worker, CA_CERT_FNAME, CLIENT_NAME, 1);
-
-    printf("DONE. Sending HELLO to Arduino\n");
-    sendHello();
-    printf("DONE.\n");
-
-    while (server_is_running())
-        ;
-}
-
 // tls thread
 void *worker(void *conn) {
     int len;
@@ -312,4 +281,35 @@ void *uartReceiveThread(void *p) {
             }
         }
     }
+}
+
+int main() {
+    pthread_t serThread;
+
+    printf("\nALEX REMOTE SUBSYSTEM\n\n");
+
+    printf("Opening Serial Port\n");
+
+    // connect to arduino
+    startSerial(PORT_NAME, BAUD_RATE, 8, 'N', 1, 1);
+
+    printf("Done. Waiting 3 seconds for Arduino to reboot\n");
+    sleep(3);
+
+    printf("DONE. Starting Serial Listener\n");
+    pthread_create(&serThread, NULL, uartReceiveThread, NULL);
+
+    printf("Starting Alex Server\n");
+
+    networkActive = 1;
+
+    // connect to laptop
+    createServer(KEY_FNAME, CERT_FNAME, SERVER_PORT, &worker, CA_CERT_FNAME, CLIENT_NAME, 1);
+
+    printf("DONE. Sending HELLO to Arduino\n");
+    sendHello();
+    printf("DONE.\n");
+
+    while (server_is_running())
+        ;
 }
