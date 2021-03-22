@@ -83,11 +83,11 @@ void handleResponse(TPacket *packet) {
 
 void handleUARTPacket(TPacket *packet) {
     switch (packet->packetType) {
-        case PACKET_TYPE_COMMAND:
-            // Only we send command packets, so ignore
-            break;
+            // case PACKET_TYPE_COMMAND:
+            //     // Only we send command packets, so ignore
+            //     break;
 
-        case PACKET_TYPE_RESPONSE:
+        case PACKET_TYPE_RESPONSE:  // handshake
             handleResponse(packet);
             break;
 
@@ -95,7 +95,7 @@ void handleUARTPacket(TPacket *packet) {
             handleErrorResponse(packet);
             break;
 
-        case PACKET_TYPE_MESSAGE:
+        case PACKET_TYPE_MESSAGE:  // scan
             handleMessage(packet);
             break;
     }
@@ -153,62 +153,41 @@ void sendNetworkData(const char *data, int len) {
 void handleCommand(void *conn, const char *buffer) {
     // The first byte contains the command
     char cmd = buffer[1];
-    uint32_t cmdParam[2];
+    // uint32_t cmdParam[2]; // params not needed
 
     // Copy over the parameters.
-    memcpy(cmdParam, &buffer[2], sizeof(cmdParam));
+    // memcpy(cmdParam, &buffer[2], sizeof(cmdParam));
 
     TPacket commandPacket;
 
     commandPacket.packetType = PACKET_TYPE_COMMAND;
-    commandPacket.params[0] = cmdParam[0];
-    commandPacket.params[1] = cmdParam[1];
+    // commandPacket.params[0] = cmdParam[0];
+    // commandPacket.params[1] = cmdParam[1];
 
-    printf("COMMAND RECEIVED: %c %d %d\n", cmd, cmdParam[0], cmdParam[1]);
+    // printf("COMMAND RECEIVED: %c %d %d\n", cmd, cmdParam[0], cmdParam[1]);
 
     switch (cmd) {
-        case 'f':
-        case 'F':
-            commandPacket.command = COMMAND_FORWARD;
-            uartSendPacket(&commandPacket);
-            break;
-
-        case 'b':
-        case 'B':
-            commandPacket.command = COMMAND_REVERSE;
-            uartSendPacket(&commandPacket);
-            break;
-
-        case 'l':
-        case 'L':
-            commandPacket.command = COMMAND_TURN_LEFT;
-            uartSendPacket(&commandPacket);
-            break;
-
-        case 'r':
-        case 'R':
-            commandPacket.command = COMMAND_TURN_RIGHT;
-            uartSendPacket(&commandPacket);
-            break;
-
+        case 'w':
+        case 'W':
+        case 'a':
+        case 'A':
         case 's':
         case 'S':
-            commandPacket.command = COMMAND_STOP;
+        case 'd':
+        case 'D':
+        case 'f':
+        case 'F':
+        case 't':
+        case 'T':
+            commandPacket.data[0] = cmd;
             uartSendPacket(&commandPacket);
             break;
 
-        case 'c':
-        case 'C':
-            commandPacket.command = COMMAND_CLEAR_STATS;
-            commandPacket.params[0] = 0;
-            uartSendPacket(&commandPacket);
-            break;
-
-        case 'g':
-        case 'G':
-            commandPacket.command = COMMAND_GET_STATS;
-            uartSendPacket(&commandPacket);
-            break;
+            // case 'g':
+            // case 'G':
+            //     commandPacket.command = COMMAND_GET_STATS;
+            //     uartSendPacket(&commandPacket);
+            //     break;
 
         default:
             printf("Bad command\n");
@@ -248,14 +227,14 @@ void *worker(void *conn) {
 
         if (len > 0) {
             printf("received command: %c\n", buffer[1]);  // testing
-            // handleNetworkData(conn, buffer, len);
-            if (buffer[1] == 'c') {
-                char data[2];
-                data[0] = NET_MESSAGE_PACKET;
-                data[1] = 'p';
-                tls_conn = conn;
-                sendNetworkData(data, sizeof(data));
-            }
+            handleNetworkData(conn, buffer, len);
+            // if (buffer[1] == 'c') {
+            //     char data[2];
+            //     data[0] = NET_MESSAGE_PACKET;
+            //     data[1] = 'p';
+            //     tls_conn = conn;
+            //     sendNetworkData(data, sizeof(data));
+            // }
         }
 
         else if (len < 0)
@@ -276,7 +255,7 @@ void *uartReceiveThread(void *p) {
 
     while (1) {
         len = serialRead(buffer);  // put into buffer
-        counter += len;
+        counter += len;            // no. of bytes received
         if (len > 0) {
             result = deserialize(buffer, len, &packet);  // put into packet
 

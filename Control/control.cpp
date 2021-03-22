@@ -17,6 +17,7 @@
 static volatile int networkActive = 0;
 
 void handleError(const char *buffer) {
+    printf("Error: ");
     switch (buffer[1]) {
         case RESP_OK:
             printf("Command / Status OK\n");
@@ -44,31 +45,31 @@ void handleError(const char *buffer) {
 }
 
 // change
-void handleStatus(const char *buffer) {
-    int32_t data[16];
-    memcpy(data, &buffer[1], sizeof(data));
+// void handleStatus(const char *buffer) {
+//     int32_t data[16];
+//     memcpy(data, &buffer[1], sizeof(data));
 
-    printf("\n ------- ALEX STATUS REPORT ------- \n\n");
-    printf("Left Forward Ticks:\t\t%d\n", data[0]);
-    printf("Right Forward Ticks:\t\t%d\n", data[1]);
-    printf("Left Reverse Ticks:\t\t%d\n", data[2]);
-    printf("Right Reverse Ticks:\t\t%d\n", data[3]);
-    printf("Left Forward Ticks Turns:\t%d\n", data[4]);
-    printf("Right Forward Ticks Turns:\t%d\n", data[5]);
-    printf("Left Reverse Ticks Turns:\t%d\n", data[6]);
-    printf("Right Reverse Ticks Turns:\t%d\n", data[7]);
-    printf("Forward Distance:\t\t%d\n", data[8]);
-    printf("Reverse Distance:\t\t%d\n", data[9]);
-    printf("\n---------------------------------------\n\n");
-}
+//     printf("\n ------- ALEX STATUS REPORT ------- \n\n");
+//     printf("Left Forward Ticks:\t\t%d\n", data[0]);
+//     printf("Right Forward Ticks:\t\t%d\n", data[1]);
+//     printf("Left Reverse Ticks:\t\t%d\n", data[2]);
+//     printf("Right Reverse Ticks:\t\t%d\n", data[3]);
+//     printf("Left Forward Ticks Turns:\t%d\n", data[4]);
+//     printf("Right Forward Ticks Turns:\t%d\n", data[5]);
+//     printf("Left Reverse Ticks Turns:\t%d\n", data[6]);
+//     printf("Right Reverse Ticks Turns:\t%d\n", data[7]);
+//     printf("Forward Distance:\t\t%d\n", data[8]);
+//     printf("Reverse Distance:\t\t%d\n", data[9]);
+//     printf("\n---------------------------------------\n\n");
+// }
 
 void handleMessage(const char *buffer) { printf("MESSAGE FROM ALEX: %s\n", &buffer[1]); }
 
-void handleCommand(const char *buffer) {
-    // We don't do anything because we issue commands
-    // but we don't get them. Put this here
-    // for future expansion
-}
+// void handleCommand(const char *buffer) {
+//     // We don't do anything because we issue commands
+//     // but we don't get them. Put this here
+//     // for future expansion
+// }
 
 void handleNetwork(const char *buffer, int len) {
     // The first byte is the packet type
@@ -79,23 +80,26 @@ void handleNetwork(const char *buffer, int len) {
             handleError(buffer);
             break;
 
-        case NET_STATUS_PACKET:
-            handleStatus(buffer);
-            break;
+            // case NET_STATUS_PACKET:
+            //     handleStatus(buffer);
+            //     break;
 
         case NET_MESSAGE_PACKET:
             handleMessage(buffer);
             break;
 
-        case NET_COMMAND_PACKET:
-            handleCommand(buffer);
-            break;
+            // case NET_COMMAND_PACKET:
+            //     handleCommand(buffer);
+            //     break;
+
+        default:
+            // will not execute, all cases covered
     }
 }
 
 void sendData(void *conn, const char *buffer, int len) {
     int c;
-    printf("\nSENDING %d BYTES DATA\n\n", len);
+    // printf("\nSENDING %d BYTES DATA\n\n", len);
     if (networkActive) {
         c = sslWrite(conn, buffer, len);
 
@@ -110,7 +114,7 @@ void *readerThread(void *conn) {
     while (networkActive) {
         len = sslRead(conn, buffer,
                       sizeof(buffer));  // copy len bytes from ssl to buffer
-        printf("read %d bytes from server.\n", len);
+        // printf("read %d bytes from server.\n", len);
 
         networkActive = (len > 0);
 
@@ -123,37 +127,33 @@ void *readerThread(void *conn) {
     EXIT_THREAD(conn);
 }
 
-void flushInput() {
-    char c;
+// void flushInput() {
+//     char c;
 
-    while ((c = getchar()) != '\n' && c != EOF)
-        ;
-}
+//     while ((c = getchar()) != '\n' && c != EOF)
+//         ;
+// }
 
-void getParams(int32_t *params) {
-    printf(
-        "Enter distance/angle in cm/degrees (e.g. 50) and power in %% (e.g. "
-        "75) separated by space.\n");
-    printf(
-        "E.g. 50 75 means go at 50 cm at 75%% power for forward/backward, or "
-        "50 degrees left or right turn at 75%%  power\n");
-    scanf("%d %d", &params[0], &params[1]);
-    flushInput();
-}
+// void getParams(int32_t *params) {
+//     printf(
+//         "Enter distance/angle in cm/degrees (e.g. 50) and power in %% (e.g. "
+//         "75) separated by space.\n");
+//     printf(
+//         "E.g. 50 75 means go at 50 cm at 75%% power for forward/backward, or "
+//         "50 degrees left or right turn at 75%%  power\n");
+//     scanf("%d %d", &params[0], &params[1]);
+//     flushInput();
+// }
 
 void *writerThread(void *conn) {
     int quit = 0;
 
-    // test
     system("/bin/stty cbreak");
 
-    printf("Command (q=exit)\n");
+    printf("Command (q=exit, WASD, f=scan)\n");
     while (!quit) {
         char ch;
-        // scanf("%c", &ch);
         ch = getchar();
-        // Purge extraneous characters from input stream
-        // flushInput(); //remove flush for continuous input
 
         char buffer[2];
 
@@ -163,71 +163,39 @@ void *writerThread(void *conn) {
             case 'Q':
                 quit = 1;
                 break;
-            default:
+            case 'w':
+            case 'W':
+            case 'a':
+            case 'A':
+            case 's':
+            case 'S':
+            case 'd':
+            case 'D':
+            case 'f':
+            case 'F':
+            case 't':
+            case 'T':
                 buffer[1] = ch;
                 sendData(conn, buffer, sizeof(buffer));
+                break;
+            default:
+                printf("BAD COMMAND\n");
         }
     }
 
     system("/bin/stty cooked");
 
-    // while (!quit) {
-    //     char ch;
-    //     printf(
-    //         "Command (f=forward, b=reverse, l=turn left, r=turn right, s=stop, "
-    //         "c=clear stats, g=get stats q=exit)\n");
-    //     scanf("%c", &ch);
-    //     // ch = getchar();
+    printf("Exiting keyboard thread\n");
 
-    //     // Purge extraneous characters from input stream
-    //     flushInput();
+    stopClient();
+    EXIT_THREAD(conn);
 
-    //     char buffer[10];
-    //     int32_t params[2];
-
-    //     buffer[0] = NET_COMMAND_PACKET;
-    //     switch (ch) {
-    //         case 'f':
-    //         case 'F':
-    //         case 'b':
-    //         case 'B':
-    //         case 'l':
-    //         case 'L':
-    //         case 'r':
-    //         case 'R':
     //             getParams(params);
-    //             params[0] = 100;
-    //             params[1] = 100;
     //             flushInput();
     //             buffer[1] = ch;
     //             memcpy(&buffer[2], params, sizeof(params));
     //             sendData(conn, buffer, sizeof(buffer));
     //             break;
-    //         case 's':
-    //         case 'S':
-    //         case 'c':
-    //         case 'C':
-    //         case 'g':
-    //         case 'G':
-    //             params[0] = 0;
-    //             params[1] = 0;
-    //             memcpy(&buffer[2], params, sizeof(params));
-    //             buffer[1] = ch;
-    //             sendData(conn, buffer, sizeof(buffer));
-    //             break;
-    //         case 'q':
-    //         case 'Q':
-    //             quit = 1;
-    //             break;
-    //         default:
-    //             printf("BAD COMMAND\n");
-    //     }
-    // }
-
-    printf("Exiting keyboard thread\n");
-
-    stopClient();
-    EXIT_THREAD(conn);
 }
 
 void connectToServer(const char *serverName, int portNum) {
