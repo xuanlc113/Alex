@@ -1,9 +1,12 @@
+#include <Adafruit_TCS34725.h>
+
 #include <serialize.h>
 
 #include "packet.h"
 #include "constants.h"
 #include "movement.h"
 #include "interrupts.h"
+#include "colorsensor.h"
 
 // Number of ticks per revolution from the
 // wheel encoder.
@@ -40,6 +43,8 @@ volatile unsigned long reverseDist;
    Alex Communication Routines.
 
 */
+
+
 
 TResult readPacket(TPacket *packet)
 {
@@ -291,6 +296,7 @@ void handleCommand(TPacket *command)
     case 'f':
       sendOK();
       Serial.print("f");
+      sendMessage("color");
       break;
 
     case 't':
@@ -360,6 +366,7 @@ void setup()
   //enablePullups();
   initializeState();
   sei();
+  setupColorSensor();
 }
 
 void handlePacket(TPacket *packet)
@@ -408,4 +415,5 @@ void loop()
   {
     sendBadChecksum();
   }
+  senseColor();
 }
