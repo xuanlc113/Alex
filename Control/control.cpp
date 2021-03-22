@@ -91,9 +91,6 @@ void handleNetwork(const char *buffer, int len) {
             // case NET_COMMAND_PACKET:
             //     handleCommand(buffer);
             //     break;
-
-        default:
-            // will not execute, all cases covered
     }
 }
 
