@@ -559,42 +559,42 @@ void initializeState()
 
 void handleCommand(TPacket *command)
 {
-  switch (command->data[0])
+  switch (command->command)
   {
     // For movement commands, param[0] = distance, param[1] = speed.
-    case 'w':
+    case COMMAND_FORWARD:
       sendOK();
-      forward(1, 100);
+      forward((float) command->params[0], (float) command->params[1]);
       break;
 
-    case 's':
+    case COMMAND_REVERSE:
       sendOK();
-      reverse(1, 100);
+      reverse((float) command->params[0], (float) command->params[1]);
       break;
 
-    case 'a':
+    case COMMAND_TURN_LEFT:
       sendOK();
-      left(1, 100);
+      left((float) command->params[0], (float) command->params[1]);
       break;
 
-    case 'd':
+    case COMMAND_TURN_RIGHT:
       sendOK();
-      right(1, 100);
+      right((float) command->params[0], (float) command->params[1]);
       break;
 
-//    case COMMAND_STOP:
-//      sendOK();
-//      stop();
-//      break;
-//
-//    case COMMAND_GET_STATS:
-//      sendStatus();
-//      break;
-//
-//    case COMMAND_CLEAR_STATS:
-//      sendOK();
-//      clearOneCounter(command->params[0]);
-//      break;
+    case COMMAND_STOP:
+      sendOK();
+      stop();
+      break;
+
+    case COMMAND_GET_STATS:
+      sendStatus();
+      break;
+
+    case COMMAND_CLEAR_STATS:
+      sendOK();
+      clearOneCounter(command->params[0]);
+      break;
     /*
        Implement code for other commands here.
 
