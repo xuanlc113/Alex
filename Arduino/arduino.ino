@@ -1,24 +1,51 @@
-#include <Adafruit_TCS34725.h>
-
 #include <serialize.h>
-
+#include <stdarg.h>
 #include "packet.h"
 #include "constants.h"
-#include "movement.h"
-#include "interrupts.h"
-#include "colorsensor.h"
+#include <math.h>
+typedef enum
+{
+  STOP = 0,
+  FORWARD = 1,
+  BACKWARD = 2,
+  LEFT = 3,
+  RIGHT = 4
+} TDirection;
+volatile TDirection dir = STOP;
+/*
+   Alex's configuration constants
+*/
 
 // Number of ticks per revolution from the
 // wheel encoder.
 
-#define COUNTS_PER_REV 1
+#define COUNTS_PER_REV      180
 
 // Wheel circumference in cm.
 // We will use this to calculate forward/backward distance traveled
 // by taking revs * WHEEL_CIRC
 
-#define WHEEL_CIRC 1
+#define WHEEL_CIRC          19
 
+// Motor control pins. You need to adjust these till
+// Alex moves in the correct direction
+#define LF                  6   // Left forward pin
+#define LR                  5   // Left reverse pin
+#define RF                  10  // Right forward pin
+#define RR                  11  // Right reverse pin
+
+//Alex dimensions
+#define ALEX_LENGTH 18
+#define ALEX_BREADTH 11
+
+//PI definition
+//#define PI 3.141592654/
+
+// Alex Diagonal
+float AlexDiagonal = 0.0;
+
+//Turning Circumference
+float AlexCirc = 0.0;
 
 /*
       Alex's State Variables
@@ -26,8 +53,19 @@
 
 // Store the ticks from Alex's left and
 // right encoders.
-volatile unsigned long leftTicks;
-volatile unsigned long rightTicks;
+volatile unsigned long leftForwardTicks;
+volatile unsigned long rightForwardTicks;
+
+volatile unsigned long leftReverseTicks;
+volatile unsigned long rightReverseTicks;
+
+// Store the ticks per turnsorward from Alex's left and
+// right encoders.
+volatile unsigned long leftForwardTicksTurns;
+volatile unsigned long rightForwardTicksTurns;
+
+volatile unsigned long leftReverseTicksTurns;
+volatile unsigned long rightReverseTicksTurns;
 
 // Store the revolutions on Alex's left
 // and right wheels
@@ -38,13 +76,17 @@ volatile unsigned long rightRevs;
 volatile unsigned long forwardDist;
 volatile unsigned long reverseDist;
 
+//Variables to keep track of whether we have moved a command distance
+unsigned long deltaDist;
+unsigned long newDist;
+unsigned long deltaTicks;
+unsigned long targetTicks;
+
 /*
 
    Alex Communication Routines.
 
 */
-
-
 
 TResult readPacket(TPacket *packet)
 {
@@ -61,15 +103,39 @@ TResult readPacket(TPacket *packet)
     return PACKET_INCOMPLETE;
   else
     return deserialize(buffer, len, packet);
+
 }
 
-
-//probably don't need this
-//void sendStatus(){}
+void sendStatus()
+{
+  // Implement code to send back a packet containing key
+  // information like leftForwardTicks, rightForwardTicks, leftRevs, rightRevs
+  // forwardDist and reverseDist
+  // Use the params array to store this information, and set the
+  // packetType and command files accordingly, then use sendResponse
+  // to send out the packet. See sendMessage on how to use sendResponse.
+  //
+  TPacket statusPacket;
+  statusPacket.packetType = PACKET_TYPE_RESPONSE;
+  statusPacket.command = RESP_STATUS;
+  statusPacket.params[0] = leftForwardTicks;
+  statusPacket.params[1] = rightForwardTicks;
+  statusPacket.params[2] = leftReverseTicks;
+  statusPacket.params[3] = rightReverseTicks;
+  statusPacket.params[4] = leftForwardTicksTurns;
+  statusPacket.params[5] = rightForwardTicksTurns;
+  statusPacket.params[6] = leftReverseTicksTurns;
+  statusPacket.params[7] = rightReverseTicksTurns;
+  statusPacket.params[8] = forwardDist;
+  statusPacket.params[9] = reverseDist;
+  sendResponse(&statusPacket);
+}
 
 void sendMessage(const char *message)
 {
-  // Sends text messages back to the Pi. Useful for debugging.
+  // Sends text messages back to the Pi. Useful
+  // for debugging.
+
   TPacket messagePacket;
   messagePacket.packetType = PACKET_TYPE_MESSAGE;
   strncpy(messagePacket.data, message, MAX_STR_LEN);
@@ -86,16 +152,21 @@ void dbprint(char *format, ...) {
 
 void sendBadPacket()
 {
-  // Tell the Pi that it sent us a packet with a bad magic number.
+  // Tell the Pi that it sent us a packet with a bad
+  // magic number.
+
   TPacket badPacket;
   badPacket.packetType = PACKET_TYPE_ERROR;
   badPacket.command = RESP_BAD_PACKET;
   sendResponse(&badPacket);
+
 }
 
 void sendBadChecksum()
 {
-  // Tell the Pi that it sent us a packet with a bad checksum.
+  // Tell the Pi that it sent us a packet with a bad
+  // checksum.
+
   TPacket badChecksum;
   badChecksum.packetType = PACKET_TYPE_ERROR;
   badChecksum.command = RESP_BAD_CHECKSUM;
@@ -104,11 +175,14 @@ void sendBadChecksum()
 
 void sendBadCommand()
 {
-  // Tell the Pi that we don't understand its command sent to us.
+  // Tell the Pi that we don't understand its
+  // command sent to us.
+
   TPacket badCommand;
   badCommand.packetType = PACKET_TYPE_ERROR;
   badCommand.command = RESP_BAD_COMMAND;
   sendResponse(&badCommand);
+
 }
 
 void sendBadResponse()
@@ -140,6 +214,99 @@ void sendResponse(TPacket *packet)
 
 
 /*
+   Setup and start codes for external interrupts and
+   pullup resistors.
+
+*/
+// Enable pull up resistors on pins 2 and 3
+void enablePullups()
+{
+  // Use bare-metal to enable the pull-up resistors on pins
+  // 2 and 3. These are pins PD2 and PD3 respectively.
+  // We set bits 2 and 3 in DDRD to 0 to make them inputs.
+  DDRD &= 0b11110011;
+  PORTD |= 0b00001100;
+}
+
+// Functions to be called by INT0 and INT1 ISRs.
+void leftISR()
+{
+  switch (dir)
+  {
+    case LEFT :
+      leftReverseTicksTurns++;
+      break;
+    case RIGHT:
+      leftForwardTicksTurns++;
+      break;
+    case FORWARD:
+      leftForwardTicks++;
+      forwardDist = (unsigned long) ((float) leftForwardTicks / COUNTS_PER_REV * WHEEL_CIRC);
+      break;
+    case BACKWARD:
+      leftReverseTicks++;
+      reverseDist = (unsigned long) ((float) leftReverseTicks / COUNTS_PER_REV * WHEEL_CIRC);
+      break;
+    case STOP:
+      break;
+  }
+  //Serial.print("LEFT: ");
+  //Serial.println(leftForwardTicks);
+}
+
+void rightISR()
+{
+  switch (dir)
+  {
+    case LEFT :
+      rightForwardTicksTurns++;
+      break;
+    case RIGHT:
+      rightReverseTicksTurns++;
+      break;
+    case FORWARD:
+      rightForwardTicks++;
+      break;
+    case BACKWARD:
+      rightReverseTicks++;
+      break;
+    case STOP:
+      break;
+  }
+  //Serial.print("RIGHT: ");
+  //Serial.println(rightForwardTicks);
+}
+
+// Set up the external interrupt pins INT0 and INT1
+// for falling edge triggered. Use bare-metal.
+void setupEINT()
+{
+  // Use bare-metal to configure pins 2 and 3 to be
+  // falling edge triggered. Remember to enable
+  // the INT0 and INT1 interrupts.
+  cli();
+  EICRA |= 0b00001010;
+  EIMSK |= 0b00000011;
+  sei();
+}
+
+// Implement the external interrupt ISRs below.
+// INT0 ISR should call leftISR while INT1 ISR
+// should call rightISR.
+
+ISR(INT0_vect)
+{
+  leftISR();
+}
+
+ISR(INT1_vect)
+{
+  rightISR();
+}
+
+// Implement INT0 and INT1 ISRs above.
+
+/*
    Setup and start codes for serial communications
 
 */
@@ -156,7 +323,12 @@ void setupSerial()
 // Arduino wiring and this function is empty. We will
 // replace this later with bare-metal code.
 
-//void startSerial(){}
+void startSerial()
+{
+  // Empty for now. To be replaced with bare-metal code
+  // later on.
+
+}
 
 // Read the serial port. Returns the read character in
 // ch if available. Also returns TRUE if ch is valid.
@@ -191,12 +363,26 @@ void writeSerial(const char *buffer, int len)
 // to drive the motors.
 void setupMotors()
 {
-  /* Our motor set up is:
-       A1IN - Pin 5, PD5, OC0B
-       A2IN - Pin 6, PD6, OC0A
-       B1IN - Pin 10, PB2, OC1B
-       B2In - pIN 11, PB3, OC2A
-  */
+  //  /* Our motor set up is:
+  //   *    A1IN - Pin 5, PD5, OC0B
+  //   *    A2IN - Pin 6, PD6, OC0A
+  //   *    B1IN - Pin 10, PB2, OC1B
+  //   *    B2In - pIN 11, PB3, OC2A
+  //   */
+  //  DDRD |= 0b01100000;
+  //  DDRB |= 0b00001100;
+  //  TCNT0 = 0;
+  //  TIMSK0 |= 0b110; // OCIEA = 1 OCIEB = 1
+  //  OCR0A = 128;
+  //  OCR0B = 128;
+  //  TCCR0A = 0b10000001;
+  //
+  //  TCNT2 = 0;
+  //  TIMSK2 |= 0b110; // OCIEA = 1 OCIEB = 1
+  //  OCR2A = 128;
+  //  OCR2B = 128;
+  //  TCCR2A = 0b10000001;
+  //  sei();
 }
 
 // Start the PWM for Alex's motors.
@@ -204,9 +390,144 @@ void setupMotors()
 // blank.
 void startMotors()
 {
+  //  TCCR0B |= 0b00000011;
+  //  TCCR2B |= 0b00000011;
 }
 
+// Convert percentages to PWM values
+int pwmVal(float speed)
+{
+  if (speed < 0.0)
+    speed = 0;
 
+  if (speed > 100.0)
+    speed = 100.0;
+
+  return (int) ((speed / 100.0) * 255.0);
+}
+
+// Move Alex forward "dist" cm at speed "speed".
+// "speed" is expressed as a percentage. E.g. 50 is
+// move forward at half speed.
+// Specifying a distance of 0 means Alex will
+// continue moving forward indefinitely.
+void forward(float dist, float speed)
+{
+  if (dist > 0)
+    deltaDist = dist;
+  else
+    deltaDist = 9999999;
+  newDist = forwardDist + deltaDist;
+
+  int val = pwmVal(speed);
+  dir = FORWARD;
+  // For now we will ignore dist and move
+  // forward indefinitely. We will fix this
+  // in Week 9.
+
+  // LF = Left forward pin, LR = Left reverse pin
+  // RF = Right forward pin, RR = Right reverse pin
+  // This will be replaced later with bare-metal code.
+
+  analogWrite(LF, val);
+  analogWrite(RF, val);
+  analogWrite(LR, 0);
+  analogWrite(RR, 0);
+}
+
+// Reverse Alex "dist" cm at speed "speed".
+// "speed" is expressed as a percentage. E.g. 50 is
+// reverse at half speed.
+// Specifying a distance of 0 means Alex will
+// continue reversing indefinitely.
+void reverse(float dist, float speed)
+{
+  if (dist > 0)
+    deltaDist = dist;
+  else
+    deltaDist = 9999999;
+  newDist = reverseDist + deltaDist;
+
+  int val = pwmVal(speed);
+  dir = BACKWARD;
+  // For now we will ignore dist and
+  // reverse indefinitely. We will fix this
+  // in Week 9.
+
+  // LF = Left forward pin, LR = Left reverse pin
+  // RF = Right forward pin, RR = Right reverse pin
+  // This will be replaced later with bare-metal code.
+  analogWrite(LR, val);
+  analogWrite(RR, val);
+  analogWrite(LF, 0);
+  analogWrite(RF, 0);
+}
+
+unsigned long computeDeltaTicks(float ang)
+{
+  unsigned long ticks = (unsigned long) ((ang * AlexCirc * COUNTS_PER_REV) / (360.0 * WHEEL_CIRC));
+  return ticks;
+}
+
+// Turn Alex left "ang" degrees at speed "speed".
+// "speed" is expressed as a percentage. E.g. 50 is
+// turn left at half speed.
+// Specifying an angle of 0 degrees will cause Alex to
+// turn left indefinitely.
+void left(float ang, float speed)
+{
+  if (ang == 0)
+    deltaTicks = 99999999;
+  else
+    deltaTicks = computeDeltaTicks(ang);
+  targetTicks = leftReverseTicksTurns + deltaTicks;
+
+  int val = pwmVal(speed);
+  dir = LEFT;
+  // For now we will ignore ang. We will fix this in Week 9.
+  // We will also replace this code with bare-metal later.
+  // To turn left we reverse the left wheel and move
+  // the right wheel forward.
+  analogWrite(LR, val);
+  analogWrite(RF, val);
+  analogWrite(LF, 0);
+  analogWrite(RR, 0);
+}
+
+// Turn Alex right "ang" degrees at speed "speed".
+// "speed" is expressed as a percentage. E.g. 50 is
+// turn left at half speed.
+// Specifying an angle of 0 degrees will cause Alex to
+// turn right indefinitely.
+void right(float ang, float speed)
+{
+  if (ang == 0)
+    deltaTicks = 99999999;
+  else
+    deltaTicks = computeDeltaTicks(ang);
+  targetTicks = rightReverseTicksTurns + deltaTicks;
+
+  int val = pwmVal(speed);
+  dir = RIGHT;
+  // For now we will ignore ang. We will fix this in Week 9.
+  // We will also replace this code with bare-metal later.
+  // To turn right we reverse the right wheel and move
+  // the left wheel forward.
+  analogWrite(RR, val);
+  analogWrite(LF, val);
+  analogWrite(LR, 0);
+  analogWrite(RF, 0);
+}
+
+// Stop Alex. To replace with bare-metal code later.
+void stop()
+{
+  dir = STOP;
+  analogWrite(LF, 0);
+  analogWrite(LR, 0);
+  analogWrite(RF, 0);
+  analogWrite(RR, 0);
+}
 
 /*
    Alex's setup and run codes
@@ -216,8 +537,8 @@ void startMotors()
 // Clears all our counters
 void clearCounters()
 {
-  leftTicks = 0;
-  rightTicks = 0;
+  leftForwardTicks = 0;
+  rightForwardTicks = 0;
   leftRevs = 0;
   rightRevs = 0;
   forwardDist = 0;
@@ -227,36 +548,7 @@ void clearCounters()
 // Clears one particular counter
 void clearOneCounter(int which)
 {
-  switch (which)
-  {
-    case 0:
-      clearCounters();
-      break;
-
-    case 1:
-      leftTicks = 0;
-      break;
-
-    case 2:
-      rightTicks = 0;
-      break;
-
-    case 3:
-      leftRevs = 0;
-      break;
-
-    case 4:
-      rightRevs = 0;
-      break;
-
-    case 5:
-      forwardDist = 0;
-      break;
-
-    case 6:
-      reverseDist = 0;
-      break;
-  }
+  clearCounters();
 }
 // Intialize Vincet's internal states
 
@@ -267,52 +559,46 @@ void initializeState()
 
 void handleCommand(TPacket *command)
 {
-  switch (command->data[0])//data[0] can be w, a, s, d, f, t
+  switch (command->data[0])
   {
+    // For movement commands, param[0] = distance, param[1] = speed.
     case 'w':
       sendOK();
-      forward((float)1, (float)1); //distance = 1, speed = 1
-      Serial.print("w");
+      forward(1, 100);
       break;
 
     case 's':
       sendOK();
-      reverse((float)10, (float)10);
-      Serial.print("s");
+      reverse(1, 100);
       break;
 
     case 'a':
       sendOK();
-      left((float)10, (float)10);
-      Serial.print("a");
+      left(1, 100);
       break;
 
     case 'd':
       sendOK();
-      right((float)10, (float)10);
-      Serial.print("d");
+      right(1, 100);
       break;
 
-    case 'f':
-      sendOK();
-      Serial.print("f");
-      sendMessage("color");
-      break;
+//    case COMMAND_STOP:
+//      sendOK();
+//      stop();
+//      break;
+//
+//    case COMMAND_GET_STATS:
+//      sendStatus();
+//      break;
+//
+//    case COMMAND_CLEAR_STATS:
+//      sendOK();
+//      clearOneCounter(command->params[0]);
+//      break;
+    /*
+       Implement code for other commands here.
 
-    case 't':
-      sendOK();
-      stop();
-      Serial.print("t");
-      break;
-
-    //    case COMMAND_GET_STATS:
-    //      sendStatus();
-    //      break;
-    //
-    //    case COMMAND_CLEAR_STATS:
-    //      sendOK();
-    //      clearOneCounter(command->params[0]);
-    //      break;
+    */
 
     default:
       sendBadCommand();
@@ -338,6 +624,7 @@ void waitForHello()
       if (hello.packetType == PACKET_TYPE_HELLO)
       {
 
+
         sendOK();
         exit = 1;
       }
@@ -353,20 +640,19 @@ void waitForHello()
   } // !exit
 }
 
-void setup()
-{
+void setup() {
   // put your setup code here, to run once:
-
+  AlexDiagonal = sqrt((ALEX_LENGTH * ALEX_LENGTH) + (ALEX_BREADTH * ALEX_BREADTH));
+  AlexCirc = PI * AlexDiagonal;
   cli();
-  //setupEINT();
+  setupEINT();
   setupSerial();
-  //startSerial();
+  startSerial();
   setupMotors();
   startMotors();
-  //enablePullups();
+  enablePullups();
   initializeState();
   sei();
-  setupColorSensor();
 }
 
 void handlePacket(TPacket *packet)
@@ -391,14 +677,14 @@ void handlePacket(TPacket *packet)
   }
 }
 
-void loop()
-{
+void loop() {
 
   // Uncomment the code below for Step 2 of Activity 3 in Week 8 Studio 2
 
-  // forward(0, 100);
+  //forward(1, 100);
 
   // Uncomment the code below for Week 9 Studio 2
+
 
   // put your main code here, to run repeatedly:
   TPacket recvPacket; // This holds commands from the Pi
@@ -415,5 +701,61 @@ void loop()
   {
     sendBadChecksum();
   }
-  senseColor();
+
+  if (deltaDist > 0)
+  {
+    if (dir == FORWARD)
+    {
+      if (forwardDist > newDist)
+      {
+        deltaDist = 0;
+        newDist = 0;
+        stop();
+      }
+    }
+    else if (dir == BACKWARD)
+    {
+      if (reverseDist > newDist)
+      {
+        deltaDist = 0;
+        newDist = 0;
+        stop();
+      }
+    }
+    else if (dir == STOP)
+    {
+      deltaDist = 0;
+      newDist = 0;
+      stop();
+    }
+  }
+
+  if (deltaTicks > 0)
+  {
+    if (dir == LEFT)
+    {
+      if (leftReverseTicksTurns >= targetTicks)
+      {
+        deltaTicks = 0;
+        targetTicks = 0;
+        stop();
+      }
+      else if ((dir == RIGHT))
+      {
+        if (rightReverseTicksTurns >= targetTicks)
+        {
+          deltaTicks = 0;
+          targetTicks = 0;
+          stop();
+        }
+      }
+      else if (dir == STOP)
+      {
+        deltaTicks = 0;
+        targetTicks = 0;
+        stop();
+      }
+    }
+  }
+
 }
