@@ -156,37 +156,37 @@ void *writerThread(void *conn) {
         // Purge extraneous characters from input stream
         // flushInput();
 
-        char buffer[10];
-        int32_t params[2];
+        char buffer[2];
+        // int32_t params[2];
 
         buffer[0] = NET_COMMAND_PACKET;
         switch (ch) {
-            case 'f':
-            case 'F':
-            case 'b':
-            case 'B':
-            case 'l':
-            case 'L':
-            case 'r':
-            case 'R':
+            case 'w':
+            case 'W':
+            case 'a':
+            case 'A':
+            case 's':
+            case 'S':
+            case 'd':
+            case 'D':
                 // getParams(params);
-                params[0] = 100;
-                params[1] = 100;
+                // params[0] = 100;
+                // params[1] = 100;
                 buffer[1] = ch;
-                memcpy(&buffer[2], params, sizeof(params));
+                // memcpy(&buffer[2], params, sizeof(params));
                 sendData(conn, buffer, sizeof(buffer));
                 break;
-                // case 's':
-                // case 'S':
-                // case 'c':
-                // case 'C':
-                // case 'g':
-                // case 'G':
-                //     params[0] = 0;
-                //     params[1] = 0;
-                //     memcpy(&buffer[2], params, sizeof(params));
-                //     buffer[1] = ch;
-                //     sendData(conn, buffer, sizeof(buffer));
+            // case 's':
+            // case 'S':
+            // case 'c':
+            // case 'C':
+            case 'f':
+            case 'F':
+                // params[0] = 0;
+                // params[1] = 0;
+                // memcpy(&buffer[2], params, sizeof(params));
+                buffer[1] = ch;
+                sendData(conn, buffer, sizeof(buffer));
                 break;
             case 'q':
             case 'Q':
