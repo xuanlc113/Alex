@@ -150,13 +150,60 @@ void sendNetworkData(const char *data, int len) {
     }
 }
 
+// void handleCommand(void *conn, const char *buffer) {
+//     // The first byte contains the command
+//     char cmd = buffer[1];
+//     uint32_t cmdParam[2];  // params not needed
+
+//     // Copy over the parameters.
+//     // memcpy(cmdParam, &buffer[2], sizeof(cmdParam));
+
+//     TPacket commandPacket;
+
+//     commandPacket.packetType = PACKET_TYPE_COMMAND;
+//     commandPacket.params[0] = 1;
+//     commandPacket.params[1] = 100;
+
+//     // printf("COMMAND RECEIVED: %c %d %d\n", cmd, cmdParam[0], cmdParam[1]);
+
+//     switch (cmd) {
+//         case 'w':
+//         case 'W':
+//             commandPacket.command = COMMAND_FORWARD;
+//             uartSendPacket(&commandPacket);
+//             break;
+//         case 'a':
+//         case 'A':
+//         case 's':
+//         case 'S':
+//         case 'd':
+//         case 'D':
+//         case 'f':
+//         case 'F':
+//         case 't':
+//         case 'T':
+//             commandPacket.data[0] = cmd;
+//             uartSendPacket(&commandPacket);
+//             break;
+
+//             // case 'g':
+//             // case 'G':
+//             //     commandPacket.command = COMMAND_GET_STATS;
+//             //     uartSendPacket(&commandPacket);
+//             //     break;
+
+//         default:
+//             printf("Bad command\n");
+//     }
+// }
+
 void handleCommand(void *conn, const char *buffer) {
     // The first byte contains the command
     char cmd = buffer[1];
-    uint32_t cmdParam[2];  // params not needed
+    uint32_t cmdParam[2];
 
     // Copy over the parameters.
-    // memcpy(cmdParam, &buffer[2], sizeof(cmdParam));
+    memcpy(cmdParam, &buffer[2], sizeof(cmdParam));
 
     TPacket commandPacket;
 
@@ -164,33 +211,51 @@ void handleCommand(void *conn, const char *buffer) {
     commandPacket.params[0] = 1;
     commandPacket.params[1] = 100;
 
-    // printf("COMMAND RECEIVED: %c %d %d\n", cmd, cmdParam[0], cmdParam[1]);
+    printf("COMMAND RECEIVED: %c %d %d\n", cmd, cmdParam[0], cmdParam[1]);
 
     switch (cmd) {
-        case 'w':
-        case 'W':
+        case 'f':
+        case 'F':
             commandPacket.command = COMMAND_FORWARD;
             uartSendPacket(&commandPacket);
             break;
-        case 'a':
-        case 'A':
-        case 's':
-        case 'S':
-        case 'd':
-        case 'D':
-        case 'f':
-        case 'F':
-        case 't':
-        case 'T':
-            commandPacket.data[0] = cmd;
+
+        case 'b':
+        case 'B':
+            commandPacket.command = COMMAND_REVERSE;
             uartSendPacket(&commandPacket);
             break;
 
-            // case 'g':
-            // case 'G':
-            //     commandPacket.command = COMMAND_GET_STATS;
-            //     uartSendPacket(&commandPacket);
-            //     break;
+        case 'l':
+        case 'L':
+            commandPacket.command = COMMAND_TURN_LEFT;
+            uartSendPacket(&commandPacket);
+            break;
+
+        case 'r':
+        case 'R':
+            commandPacket.command = COMMAND_TURN_RIGHT;
+            uartSendPacket(&commandPacket);
+            break;
+
+        case 's':
+        case 'S':
+            commandPacket.command = COMMAND_STOP;
+            uartSendPacket(&commandPacket);
+            break;
+
+        case 'c':
+        case 'C':
+            commandPacket.command = COMMAND_CLEAR_STATS;
+            commandPacket.params[0] = 0;
+            uartSendPacket(&commandPacket);
+            break;
+
+        case 'g':
+        case 'G':
+            commandPacket.command = COMMAND_GET_STATS;
+            uartSendPacket(&commandPacket);
+            break;
 
         default:
             printf("Bad command\n");
@@ -229,7 +294,7 @@ void *worker(void *conn) {
         networkActive = (len > 0);
 
         if (len > 0) {
-            printf("received command: %c\n", buffer[1]);  // testing
+            // printf("received command: %c\n", buffer[1]);  // testing
             handleNetworkData(conn, buffer, len);
             // if (buffer[1] == 'c') {
             //     char data[2];
