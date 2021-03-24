@@ -143,15 +143,18 @@ void getParams(int32_t *params) {
 void *writerThread(void *conn) {
     int quit = 0;
 
+    system("/bin/stty cbreak");
+
     while (!quit) {
         char ch;
         printf(
             "Command (f=forward, b=reverse, l=turn left, r=turn right, s=stop, c=clear stats, "
             "g=get stats q=exit)\n");
-        scanf("%c", &ch);
+        // scanf("%c", &ch);
+        ch = getchar();
 
         // Purge extraneous characters from input stream
-        flushInput();
+        // flushInput();
 
         char buffer[10];
         int32_t params[2];
@@ -166,22 +169,24 @@ void *writerThread(void *conn) {
             case 'L':
             case 'r':
             case 'R':
-                getParams(params);
+                // getParams(params);
+                params[0] = 100;
+                params[1] = 100;
                 buffer[1] = ch;
                 memcpy(&buffer[2], params, sizeof(params));
                 sendData(conn, buffer, sizeof(buffer));
                 break;
-            case 's':
-            case 'S':
-            case 'c':
-            case 'C':
-            case 'g':
-            case 'G':
-                params[0] = 0;
-                params[1] = 0;
-                memcpy(&buffer[2], params, sizeof(params));
-                buffer[1] = ch;
-                sendData(conn, buffer, sizeof(buffer));
+                // case 's':
+                // case 'S':
+                // case 'c':
+                // case 'C':
+                // case 'g':
+                // case 'G':
+                //     params[0] = 0;
+                //     params[1] = 0;
+                //     memcpy(&buffer[2], params, sizeof(params));
+                //     buffer[1] = ch;
+                //     sendData(conn, buffer, sizeof(buffer));
                 break;
             case 'q':
             case 'Q':
@@ -191,6 +196,8 @@ void *writerThread(void *conn) {
                 printf("BAD COMMAND\n");
         }
     }
+
+    system("/bin/stty cooked");
 
     printf("Exiting keyboard thread\n");
 
