@@ -153,7 +153,7 @@ void sendNetworkData(const char *data, int len) {
 void handleCommand(void *conn, const char *buffer) {
     // The first byte contains the command
     char cmd = buffer[1];
-    // uint32_t cmdParam[2]; // params not needed
+    uint32_t cmdParam[2];  // params not needed
 
     // Copy over the parameters.
     // memcpy(cmdParam, &buffer[2], sizeof(cmdParam));
@@ -161,14 +161,17 @@ void handleCommand(void *conn, const char *buffer) {
     TPacket commandPacket;
 
     commandPacket.packetType = PACKET_TYPE_COMMAND;
-    // commandPacket.params[0] = cmdParam[0];
-    // commandPacket.params[1] = cmdParam[1];
+    commandPacket.params[0] = 1;
+    commandPacket.params[1] = 100;
 
     // printf("COMMAND RECEIVED: %c %d %d\n", cmd, cmdParam[0], cmdParam[1]);
 
     switch (cmd) {
         case 'w':
         case 'W':
+            commandPacket.command = COMMAND_FORWARD;
+            uartSendPacket(&commandPacket);
+            break;
         case 'a':
         case 'A':
         case 's':
