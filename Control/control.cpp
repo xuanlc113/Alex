@@ -195,6 +195,7 @@ void *writerThread(void *conn) {
             default:
                 printf("BAD COMMAND\n");
         }
+        fflush() usleep(500000);
     }
 
     system("/bin/stty cooked");

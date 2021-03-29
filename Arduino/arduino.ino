@@ -502,7 +502,7 @@ void initializeState() { clearCounters(); }
 
 void handleCommand(TPacket *command) {
     switch (command->command) {
-        // For movement commands, param[0] = distance, param[1] = speed.
+        // For movement commands, pawwsram[0] = distance, param[1] = speed.
         case COMMAND_FORWARD:
             sendOK();
             forward(1, 100);
