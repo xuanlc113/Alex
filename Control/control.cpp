@@ -1,4 +1,4 @@
-
+#include <ncurses.h>
 // Routines to create a TLS client
 #include "client_lib/make_tls_client.h"
 
@@ -143,15 +143,14 @@ void getParams(int32_t *params) {
 void *writerThread(void *conn) {
     int quit = 0;
 
-    system("/bin/stty cbreak");
-
+    initscr();
     while (!quit) {
         char ch;
         printf(
             "Command (f=forward, b=reverse, l=turn left, r=turn right, s=stop, c=clear stats, "
             "g=get stats q=exit)\n");
         // scanf("%c", &ch);
-        ch = getchar();
+        ch = getch();
 
         // Purge extraneous characters from input stream
         // flushInput();
@@ -195,10 +194,9 @@ void *writerThread(void *conn) {
             default:
                 printf("BAD COMMAND\n");
         }
-        fflush() usleep(500000);
+        fflush();
+        usleep(500000);
     }
-
-    system("/bin/stty cooked");
 
     printf("Exiting keyboard thread\n");
 
