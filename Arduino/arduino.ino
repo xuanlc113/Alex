@@ -388,6 +388,8 @@ void forward(float dist, float speed) {
     analogWrite(RF, val);
     analogWrite(LR, 0);
     analogWrite(RR, 0);
+    delay(100);
+    stop();
 }
 
 // Reverse Alex "dist" cm at speed "speed".
@@ -415,6 +417,8 @@ void reverse(float dist, float speed) {
     analogWrite(RR, val);
     analogWrite(LF, 0);
     analogWrite(RF, 0);
+    delay(100);
+    stop();
 }
 
 unsigned long computeDeltaTicks(float ang) {
@@ -444,6 +448,8 @@ void left(float ang, float speed) {
     analogWrite(RF, val);
     analogWrite(LF, 0);
     analogWrite(RR, 0);
+    delay(100);
+    stop();
 }
 
 // Turn Alex right "ang" degrees at speed "speed".
@@ -468,6 +474,8 @@ void right(float ang, float speed) {
     analogWrite(LF, val);
     analogWrite(LR, 0);
     analogWrite(RF, 0);
+    delay(100);
+    stop();
 }
 
 // Stop Alex. To replace with bare-metal code later.
@@ -571,6 +579,7 @@ void waitForHello() {
 }
 
 void setup() {
+
     // put your setup code here, to run once:
     AlexDiagonal = sqrt((ALEX_LENGTH * ALEX_LENGTH) + (ALEX_BREADTH * ALEX_BREADTH));
     AlexCirc = PI * AlexDiagonal;
@@ -608,7 +617,15 @@ void handlePacket(TPacket *packet) {
 void loop() {
     // Uncomment the code below for Step 2 of Activity 3 in Week 8 Studio 2
 
-    // forward(1, 100);
+    //char c = Serial.read();
+    //if(c == 'd') {
+      //forward(1, 100);
+      //right(1, 100);
+      //left(1, 100);
+      //reverse(1, 100);
+    //}
+    // 
+
 
     // Uncomment the code below for Week 9 Studio 2
 
@@ -625,43 +642,43 @@ void loop() {
         sendBadChecksum();
     }
 
-    if (deltaDist > 0) {
-        if (dir == FORWARD) {
-            if (forwardDist > newDist) {
-                deltaDist = 0;
-                newDist = 0;
-                stop();
-            }
-        } else if (dir == BACKWARD) {
-            if (reverseDist > newDist) {
-                deltaDist = 0;
-                newDist = 0;
-                stop();
-            }
-        } else if (dir == STOP) {
-            deltaDist = 0;
-            newDist = 0;
-            stop();
-        }
-    }
+//    if (deltaDist > 0) {
+//        if (dir == FORWARD) {
+//            if (forwardDist > newDist) {
+//                deltaDist = 0;
+//                newDist = 0;
+//                stop();
+//            }
+//        } else if (dir == BACKWARD) {
+//            if (reverseDist > newDist) {
+//                deltaDist = 0;
+//                newDist = 0;
+//                stop();
+//            }
+//        } else if (dir == STOP) {
+//            deltaDist = 0;
+//            newDist = 0;
+//            stop();
+//        }
+//    }
 
-    if (deltaTicks > 0) {
-        if (dir == LEFT) {
-            if (leftReverseTicksTurns >= targetTicks) {
-                deltaTicks = 0;
-                targetTicks = 0;
-                stop();
-            } else if ((dir == RIGHT)) {
-                if (rightReverseTicksTurns >= targetTicks) {
-                    deltaTicks = 0;
-                    targetTicks = 0;
-                    stop();
-                }
-            } else if (dir == STOP) {
-                deltaTicks = 0;
-                targetTicks = 0;
-                stop();
-            }
-        }
-    }
+//    if (deltaTicks > 0) {
+//        if (dir == LEFT) {
+//            if (leftReverseTicksTurns >= targetTicks) {
+//                deltaTicks = 0;
+//                targetTicks = 0;
+//                stop();
+//            } else if ((dir == RIGHT)) {
+//                if (rightReverseTicksTurns >= targetTicks) {
+//                    deltaTicks = 0;
+//                    targetTicks = 0;
+//                    stop();
+//                }
+//            } else if (dir == STOP) {
+//                deltaTicks = 0;
+//                targetTicks = 0;
+//                stop();
+//            }
+//        }
+//    }
 }
