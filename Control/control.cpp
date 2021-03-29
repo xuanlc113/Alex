@@ -89,7 +89,7 @@ void handleNetwork(const char *buffer, int len) {
 
 void sendData(void *conn, const char *buffer, int len) {
     int c;
-    printf("\nSENDING %d BYTES DATA\n\n", len);
+    // printf("\nSENDING %d BYTES DATA\n\n", len);
     if (networkActive) {
         /* TODO: Insert SSL write here to write buffer to network */
         c = sslWrite(conn, buffer, len);
@@ -129,34 +129,16 @@ void flushInput() {
         ;
 }
 
-void getParams(int32_t *params) {
-    printf(
-        "Enter distance/angle in cm/degrees (e.g. 50) and power in %% (e.g. 75) separated by "
-        "space.\n");
-    printf(
-        "E.g. 50 75 means go at 50 cm at 75%% power for forward/backward, or 50 degrees left or "
-        "right turn at 75%%  power\n");
-    scanf("%d %d", &params[0], &params[1]);
-    flushInput();
-}
-
 void *writerThread(void *conn) {
     int quit = 0;
 
     initscr();
+    printf("Command (WASD, f=scan q=exit)\n");
     while (!quit) {
         char ch;
-        printf(
-            "Command (f=forward, b=reverse, l=turn left, r=turn right, s=stop, c=clear stats, "
-            "g=get stats q=exit)\n");
-        // scanf("%c", &ch);
         ch = getch();
 
-        // Purge extraneous characters from input stream
-        // flushInput();
-
         char buffer[2];
-        // int32_t params[2];
 
         buffer[0] = NET_COMMAND_PACKET;
         switch (ch) {
@@ -168,22 +150,11 @@ void *writerThread(void *conn) {
             case 'S':
             case 'd':
             case 'D':
-                // getParams(params);
-                // params[0] = 100;
-                // params[1] = 100;
                 buffer[1] = ch;
-                // memcpy(&buffer[2], params, sizeof(params));
                 sendData(conn, buffer, sizeof(buffer));
                 break;
-            // case 's':
-            // case 'S':
-            // case 'c':
-            // case 'C':
             case 'f':
             case 'F':
-                // params[0] = 0;
-                // params[1] = 0;
-                // memcpy(&buffer[2], params, sizeof(params));
                 buffer[1] = ch;
                 sendData(conn, buffer, sizeof(buffer));
                 break;
@@ -194,8 +165,8 @@ void *writerThread(void *conn) {
             default:
                 printf("BAD COMMAND\n");
         }
-        fflush();
-        usleep(500000);
+        flushinp();
+        usleep(200000);
     }
 
     printf("Exiting keyboard thread\n");
