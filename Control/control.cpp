@@ -172,6 +172,7 @@ void *writerThread(void *conn) {
     printf("Exiting keyboard thread\n");
 
     /* TODO: Stop the client loop and call EXIT_THREAD */
+    endwin();
     stopClient();
     EXIT_THREAD(conn);
     /* END TODO */
