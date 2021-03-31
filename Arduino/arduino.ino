@@ -1,9 +1,11 @@
+#include <Adafruit_TCS34725.h>
 #include <math.h>
 #include <serialize.h>
 #include <stdarg.h>
 
 #include "constants.h"
 #include "packet.h"
+#include "colorsensor.h"
 
 typedef enum { STOP = 0, FORWARD = 1, BACKWARD = 2, LEFT = 3, RIGHT = 4 } TDirection;
 volatile TDirection dir = STOP;
@@ -99,27 +101,20 @@ TResult readPacket(TPacket *packet) {
         return deserialize(buffer, len, packet);
 }
 
-void sendStatus() {
-    // Implement code to send back a packet containing key
-    // information like leftForwardTicks, rightForwardTicks, leftRevs, rightRevs
-    // forwardDist and reverseDist
-    // Use the params array to store this information, and set the
-    // packetType and command files accordingly, then use sendResponse
-    // to send out the packet. See sendMessage on how to use sendResponse.
-    //
+void sendStatus() { //changed to send color
     TPacket statusPacket;
     statusPacket.packetType = PACKET_TYPE_RESPONSE;
     statusPacket.command = RESP_STATUS;
-    statusPacket.params[0] = leftForwardTicks;
-    statusPacket.params[1] = rightForwardTicks;
-    statusPacket.params[2] = leftReverseTicks;
-    statusPacket.params[3] = rightReverseTicks;
-    statusPacket.params[4] = leftForwardTicksTurns;
-    statusPacket.params[5] = rightForwardTicksTurns;
-    statusPacket.params[6] = leftReverseTicksTurns;
-    statusPacket.params[7] = rightReverseTicksTurns;
-    statusPacket.params[8] = forwardDist;
-    statusPacket.params[9] = reverseDist;
+    statusPacket.params[0] = senseColor();
+//    statusPacket.params[1] = rightForwardTicks;
+//    statusPacket.params[2] = leftReverseTicks;
+//    statusPacket.params[3] = rightReverseTicks;
+//    statusPacket.params[4] = leftForwardTicksTurns;
+//    statusPacket.params[5] = rightForwardTicksTurns;
+//    statusPacket.params[6] = leftReverseTicksTurns;
+//    statusPacket.params[7] = rightReverseTicksTurns;
+//    statusPacket.params[8] = forwardDist;
+//    statusPacket.params[9] = reverseDist;
     sendResponse(&statusPacket);
 }
 
@@ -537,7 +532,7 @@ void handleCommand(TPacket *command) {
             break;
 
         case COMMAND_GET_STATS:
-            sendStatus();
+            sendColor();
             break;
 
         case COMMAND_CLEAR_STATS:
@@ -592,6 +587,7 @@ void setup() {
     enablePullups();
     initializeState();
     sei();
+    setupColorSensor();
 }
 
 void handlePacket(TPacket *packet) {
@@ -615,18 +611,8 @@ void handlePacket(TPacket *packet) {
 }
 
 void loop() {
-    // Uncomment the code below for Step 2 of Activity 3 in Week 8 Studio 2
-
-    //char c = Serial.read();
-    //if(c == 'd') {
-      //forward(1, 100);
-      //right(1, 100);
-      //left(1, 100);
-      //reverse(1, 100);
-    //}
-    // 
-
-
+    // Uncomment the code below for Step 2 of Activity 3 in Week 8 Studio 2    
+    //senseColor();
     // Uncomment the code below for Week 9 Studio 2
 
     // put your main code here, to run repeatedly:
