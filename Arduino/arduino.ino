@@ -532,7 +532,7 @@ void handleCommand(TPacket *command) {
             break;
 
         case COMMAND_GET_STATS:
-            sendColor();
+            sendStatus();
             break;
 
         case COMMAND_CLEAR_STATS:
