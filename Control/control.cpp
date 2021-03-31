@@ -41,19 +41,7 @@ void handleError(const char *buffer) {
 void handleStatus(const char *buffer) {
     int32_t data[16];
     memcpy(data, &buffer[1], sizeof(data));
-
-    printf("\n ------- ALEX STATUS REPORT ------- \n\n");
-    printf("Left Forward Ticks:\t\t%d\n", data[0]);
-    printf("Right Forward Ticks:\t\t%d\n", data[1]);
-    printf("Left Reverse Ticks:\t\t%d\n", data[2]);
-    printf("Right Reverse Ticks:\t\t%d\n", data[3]);
-    printf("Left Forward Ticks Turns:\t%d\n", data[4]);
-    printf("Right Forward Ticks Turns:\t%d\n", data[5]);
-    printf("Left Reverse Ticks Turns:\t%d\n", data[6]);
-    printf("Right Reverse Ticks Turns:\t%d\n", data[7]);
-    printf("Forward Distance:\t\t%d\n", data[8]);
-    printf("Reverse Distance:\t\t%d\n", data[9]);
-    printf("\n---------------------------------------\n\n");
+    printf("color: %s\n", data[0] ? "red" : "green");
 }
 
 void handleMessage(const char *buffer) { printf("MESSAGE FROM ALEX: %s\n", &buffer[1]); }
