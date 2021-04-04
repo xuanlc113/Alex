@@ -3,9 +3,9 @@
 #include <serialize.h>
 #include <stdarg.h>
 
+#include "colorsensor.h"
 #include "constants.h"
 #include "packet.h"
-#include "colorsensor.h"
 
 typedef enum { STOP = 0, FORWARD = 1, BACKWARD = 2, LEFT = 3, RIGHT = 4 } TDirection;
 volatile TDirection dir = STOP;
@@ -101,20 +101,20 @@ TResult readPacket(TPacket *packet) {
         return deserialize(buffer, len, packet);
 }
 
-void sendStatus() { //changed to send color
+void sendStatus() {  // changed to send color
     TPacket statusPacket;
     statusPacket.packetType = PACKET_TYPE_RESPONSE;
     statusPacket.command = RESP_STATUS;
     statusPacket.params[0] = senseColor();
-//    statusPacket.params[1] = rightForwardTicks;
-//    statusPacket.params[2] = leftReverseTicks;
-//    statusPacket.params[3] = rightReverseTicks;
-//    statusPacket.params[4] = leftForwardTicksTurns;
-//    statusPacket.params[5] = rightForwardTicksTurns;
-//    statusPacket.params[6] = leftReverseTicksTurns;
-//    statusPacket.params[7] = rightReverseTicksTurns;
-//    statusPacket.params[8] = forwardDist;
-//    statusPacket.params[9] = reverseDist;
+    //    statusPacket.params[1] = rightForwardTicks;
+    //    statusPacket.params[2] = leftReverseTicks;
+    //    statusPacket.params[3] = rightReverseTicks;
+    //    statusPacket.params[4] = leftForwardTicksTurns;
+    //    statusPacket.params[5] = rightForwardTicksTurns;
+    //    statusPacket.params[6] = leftReverseTicksTurns;
+    //    statusPacket.params[7] = rightReverseTicksTurns;
+    //    statusPacket.params[8] = forwardDist;
+    //    statusPacket.params[9] = reverseDist;
     sendResponse(&statusPacket);
 }
 
@@ -279,8 +279,17 @@ ISR(INT1_vect) { rightISR(); }
 // Arduino Wiring, you will replace this later
 // with bare-metal code.
 void setupSerial() {
-    // To replace later with bare-metal.
     Serial.begin(9600);
+
+    // USCR0C = 0b00000110;
+    // setBaud(57600);
+    // UCSR0A = 0;
+}
+
+void setBaud(int baudRate) {
+    int b = round(F_CPU / (16.0 * baudRate)) - 1;
+    UBRR0H = (b >> 8);
+    UBRR0L = b;
 }
 
 // Start the serial connection. For now we are using
@@ -288,9 +297,31 @@ void setupSerial() {
 // replace this later with bare-metal code.
 
 void startSerial() {
-    // Empty for now. To be replaced with bare-metal code
-    // later on.
+    // UCSR0B = 0b10111000;
 }
+
+// volatile int receiveMsg = 0;
+// volatile char buffer[PACKET_SIZE];
+
+// ISR(USART_RX_VECT) { // markers allow for continuous sending
+//     int isReceiving = 0;
+//     char startMarker = '<';
+//     char endMarker = '>';
+//     int i = 0;
+
+//     unsigned char data = UDR0;
+
+//     if (data == startMarker) {
+//         data = UDR0;
+//         while (data != endMarker) {
+//             buffer[i++] = data;
+//             data = UDR0;
+//         }
+//         receiveMsg = 1;
+//     }
+// }
+
+// ISR(USART_UDRE_VECT) {} // do we need this>
 
 // Read the serial port. Returns the read character in
 // ch if available. Also returns TRUE if ch is valid.
@@ -302,12 +333,26 @@ int readSerial(char *buffer) {
     while (Serial.available()) buffer[count++] = Serial.read();
 
     return count;
+
+    // for (int i = 0; i < 100; i++) {
+    //     while ((USCR0A & 0b10000000) == 0)
+    //         ;
+    //     buffer[i] = UDR0;
+    // }
 }
 
 // Write to the serial port. Replaced later with
 // bare-metal code
 
-void writeSerial(const char *buffer, int len) { Serial.write(buffer, len); }
+void writeSerial(const char *buffer, int len) {
+    Serial.write(buffer, len);
+
+    // for (int i = 0; i < len; i++) {
+    //     while ((USCR0A & 0b00100000) == 0)
+    //         ;
+    //     UDR0 = *buffer++;
+    // }
+}
 
 /*
    Alex's motor drivers.
@@ -574,7 +619,6 @@ void waitForHello() {
 }
 
 void setup() {
-
     // put your setup code here, to run once:
     AlexDiagonal = sqrt((ALEX_LENGTH * ALEX_LENGTH) + (ALEX_BREADTH * ALEX_BREADTH));
     AlexCirc = PI * AlexDiagonal;
@@ -611,60 +655,63 @@ void handlePacket(TPacket *packet) {
 }
 
 void loop() {
-    // Uncomment the code below for Step 2 of Activity 3 in Week 8 Studio 2    
-    //senseColor();
+    // Uncomment the code below for Step 2 of Activity 3 in Week 8 Studio 2
+    // senseColor();
     // Uncomment the code below for Week 9 Studio 2
-
+    analogWrite(LF, pwmVal(100));
+    analogWrite(RF, pwmVal(100));
+    analogWrite(LR, 0);
+    analogWrite(RR, 0);
     // put your main code here, to run repeatedly:
-    TPacket recvPacket;  // This holds commands from the Pi
+    // TPacket recvPacket;  // This holds commands from the Pi
 
-    TResult result = readPacket(&recvPacket);
+    // TResult result = readPacket(&recvPacket);
 
-    if (result == PACKET_OK)
-        handlePacket(&recvPacket);
-    else if (result == PACKET_BAD) {
-        sendBadPacket();
-    } else if (result == PACKET_CHECKSUM_BAD) {
-        sendBadChecksum();
-    }
+    // if (result == PACKET_OK)
+    //     handlePacket(&recvPacket);
+    // else if (result == PACKET_BAD) {
+    //     sendBadPacket();
+    // } else if (result == PACKET_CHECKSUM_BAD) {
+    //     sendBadChecksum();
+    // }
 
-//    if (deltaDist > 0) {
-//        if (dir == FORWARD) {
-//            if (forwardDist > newDist) {
-//                deltaDist = 0;
-//                newDist = 0;
-//                stop();
-//            }
-//        } else if (dir == BACKWARD) {
-//            if (reverseDist > newDist) {
-//                deltaDist = 0;
-//                newDist = 0;
-//                stop();
-//            }
-//        } else if (dir == STOP) {
-//            deltaDist = 0;
-//            newDist = 0;
-//            stop();
-//        }
-//    }
+    //    if (deltaDist > 0) {
+    //        if (dir == FORWARD) {
+    //            if (forwardDist > newDist) {
+    //                deltaDist = 0;
+    //                newDist = 0;
+    //                stop();
+    //            }
+    //        } else if (dir == BACKWARD) {
+    //            if (reverseDist > newDist) {
+    //                deltaDist = 0;
+    //                newDist = 0;
+    //                stop();
+    //            }
+    //        } else if (dir == STOP) {
+    //            deltaDist = 0;
+    //            newDist = 0;
+    //            stop();
+    //        }
+    //    }
 
-//    if (deltaTicks > 0) {
-//        if (dir == LEFT) {
-//            if (leftReverseTicksTurns >= targetTicks) {
-//                deltaTicks = 0;
-//                targetTicks = 0;
-//                stop();
-//            } else if ((dir == RIGHT)) {
-//                if (rightReverseTicksTurns >= targetTicks) {
-//                    deltaTicks = 0;
-//                    targetTicks = 0;
-//                    stop();
-//                }
-//            } else if (dir == STOP) {
-//                deltaTicks = 0;
-//                targetTicks = 0;
-//                stop();
-//            }
-//        }
-//    }
+    //    if (deltaTicks > 0) {
+    //        if (dir == LEFT) {
+    //            if (leftReverseTicksTurns >= targetTicks) {
+    //                deltaTicks = 0;
+    //                targetTicks = 0;
+    //                stop();
+    //            } else if ((dir == RIGHT)) {
+    //                if (rightReverseTicksTurns >= targetTicks) {
+    //                    deltaTicks = 0;
+    //                    targetTicks = 0;
+    //                    stop();
+    //                }
+    //            } else if (dir == STOP) {
+    //                deltaTicks = 0;
+    //                targetTicks = 0;
+    //                stop();
+    //            }
+    //        }
+    //    }
 }
