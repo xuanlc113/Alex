@@ -1,8 +1,11 @@
 #include <Adafruit_TCS34725.h>
+#include <avr/interrupt.h>
+#include <avr/io.h>
 #include <math.h>
 #include <serialize.h>
 #include <stdarg.h>
 
+#include "Arduino.h"
 #include "colorsensor.h"
 #include "constants.h"
 #include "packet.h"
@@ -114,117 +117,117 @@ void writeSerial(const char *buffer, int len) { Serial.write(buffer, len); }
 
 */
 
-ISR(TIMER0_COMPA_vect) {  // right fwd
+ISR(TIMER0_COMPA_vect) {  // left bwd
     PORTD ^= 1 << 6;
 }
 
-ISR(TIMER0_COMPB_vect) {  // right bwd
+ISR(TIMER0_COMPB_vect) {  // left fwd
     PORTD ^= 1 << 5;
 }
 
-ISR(TIMER2_COMPA_vect) {  // left fwd
-    PORTB ^= 1 << 3;
-}
+// ISR(TIMER2_COMPA_vect) {  // right fwd
+//     //    PORTB ^= 1 << 3;
+//     //    PORTD ^= 1 << 6;
+//     PORTD = 1 << 6;
+// }
 
-ISR(TIMER2_COMPB_vect) {  // left bwd
-    PORTB ^= 1 << 2;
-}
+// ISR(TIMER2_COMPB_vect) {  // right bwd
+//                           //    PORTB ^= 1 << 2;
+//     PORTD ^= 1 << 5;
+// }
 
 void setupMotors() {
-    //  DDRD |= 0b01100000;
-    //  DDRB |= 0b00001100;
-    //  TCNT0 = 0;
-    //  TIMSK0 |= 0b110; // OCIEA = 1 OCIEB = 1
-    //  OCR0A = 128;
-    //  OCR0B = 128;
-    //  TCCR0A = 0b10000001;
-    //
-    //  TCNT2 = 0;
-    //  TIMSK2 |= 0b110; // OCIEA = 1 OCIEB = 1
-    //  OCR2A = 128;
-    //  OCR2B = 128;
-    //  TCCR2A = 0b10000001;
+    DDRB = 0b00001100;
+    PORTB = 0b00001000;
+    DDRD = 0b01100000;
+    PORTD = 0;
 
-    DDRB |= 0b00001100;
-    DDRD |= 0b01100000;
-    PORTB &= ~(1 << 3) & ~(1 << 2);
-    PORTD &= ~(1 << 6) & ~(1 << 5);
     TCCR0A |= 0b10100001;
     TCNT0 = 0;
     OCR0A = 128;
     OCR0B = 128;
-    TIMSK0 |= (1 << OCIE0A) | (1 << OCIE0B);
+    TIMSK0 |= 0b00000110;
 
-    TCCR2A |= 0b10100001;
-    TCNT2 = 0;
-    OCR2A = 128;
-    OCR2B = 128;
-    TIMSK2 |= (1 << OCIE0A) | (1 << OCIE0B);
+    // TCCR2A |= 0b10100001;
+    // TCNT2 = 0;
+    // OCR2A = 128;
+    // OCR2B = 128;
+    // TIMSK2 |= 0b00000110;
 
-    TCCR2B |= (1 << CS01) | (1 << CS00);
-    TCCR0B |= (1 << CS01) | (1 << CS00);
+    // TCCR2B |= 0b11;
+    TCCR0B |= 0b11;
 }
 
 void forward() {
-    // analogWrite(LF, 100);
-    // analogWrite(RF, 100);
+    // DDRB = 0b00001000;
+    DDRD = 0b00100000;
+    // analogWrite(LF, 255);
+    // analogWrite(RF, 255);
     // analogWrite(LR, 0);
     // analogWrite(RR, 0);
     // delay(100);
     // stop();
-    PORTD |= 1 << 6;
-    PORTB |= 1 << 3;
-    PORTD &= ~(1 << 5);
-    PORTB &= ~(1 << 2);
+    //    PORTD |= 1 << 6;
+    //    PORTB |= 1 << 3;
+    //    PORTD &= ~(1 << 5);
+    //    PORTB &= ~(1 << 2);
+
+    //    PORTB = 0b00001000;
+    //    PORTD = 0b00100000;
 }
 
 void reverse() {
-    // analogWrite(LR, 100);
-    // analogWrite(RR, 100);
-    // analogWrite(LF, 0);
-    // analogWrite(RF, 0);
-    // delay(100);
-    // stop();
-    PORTD |= 1 << 5;
-    PORTB |= 1 << 2;
-    PORTD &= ~(1 << 6);
-    PORTB &= ~(1 << 3);
+    analogWrite(LR, 255);
+    analogWrite(RR, 255);
+    analogWrite(LF, 0);
+    analogWrite(RF, 0);
+    delay(100);
+    stop();
+    //    PORTD |= 1 << 5;
+    //    PORTB |= 1 << 2;
+    // PORTB = 0b00001000;
+    // PORTD = 0b00000000;
 }
 
 void left() {
-    // analogWrite(LR, 100);
-    // analogWrite(RF, 100);
-    // analogWrite(LF, 0);
-    // analogWrite(RR, 0);
-    // delay(100);
-    // stop();
-    PORTD |= 1 << 5;
-    PORTB |= 1 << 3;
-    PORTD &= ~(1 << 6);
-    PORTB &= ~(1 << 2);
+    analogWrite(LR, 255);
+    analogWrite(RF, 255);
+    analogWrite(LF, 0);
+    analogWrite(RR, 0);
+    delay(100);
+    stop();
+    //    PORTD |= 1 << 5;
+    //    PORTB |= 1 << 3;
+    //    PORTD &= ~(1 << 6);
+    //    PORTB &= ~(1 << 2);
+    // PORTB = 0b00000000;
+    //     PORTD = 0b01000000;
 }
 
 void right() {
-    // analogWrite(RR, 100);
-    // analogWrite(LF, 100);
-    // analogWrite(LR, 0);
-    // analogWrite(RF, 0);
-    // delay(100);
-    // stop();
-    PORTD |= 1 << 6;
-    PORTB |= 1 << 2;
-    PORTD &= ~(1 << 5);
-    PORTB &= ~(1 << 3);
+    analogWrite(RR, 255);
+    analogWrite(LF, 255);
+    analogWrite(LR, 0);
+    analogWrite(RF, 0);
+    delay(100);
+    stop();
+    //    PORTD |= 1 << 6;
+    //    PORTB |= 1 << 2;
+    //    PORTD &= ~(1 << 5);
+    //    PORTB &= ~(1 << 3);
+    // PORTB = 0b00000000;
+    //     PORTD = 0b00100000;
 }
 
 // Stop Alex. To replace with bare-metal code later.
 void stop() {
-    // analogWrite(LF, 0);
-    // analogWrite(LR, 0);
-    // analogWrite(RF, 0);
-    // analogWrite(RR, 0);
-    PORTB &= ~(1 << 3) & ~(1 << 2);
-    PORTD &= ~(1 << 6) & ~(1 << 5);
+    analogWrite(LF, 0);
+    analogWrite(LR, 0);
+    analogWrite(RF, 0);
+    analogWrite(RR, 0);
+
+    //   PORTB = 0b0000000;
+    //     PORTD = 0b00000000;
 }
 
 /*
@@ -323,30 +326,28 @@ void handlePacket(TPacket *packet) {
 
 void loop() {
     // senseColor();
-
-    // TPacket recvPacket;  // This holds commands from the Pi
-
-    // TResult result = readPacket(&recvPacket);
-
-    // if (result == PACKET_OK)
-    //     handlePacket(&recvPacket);
-    // else if (result == PACKET_BAD) {
-    //     sendBadPacket();
-    // } else if (result == PACKET_CHECKSUM_BAD) {
-    //     sendBadChecksum();
-    // }
+    forward();
+    // delay(1000);
+    // stop();
+    // reverse();
+    // delay(1000);
+    // stop();
+    // left();
+    // delay(1000);
+    // stop();
+    // right();
+    // delay(1000);
+    // stop();
 
     TPacket recvPacket;  // This holds commands from the Pi
 
-    if (receiveMsg) {
-        char buffer[PACKET_SIZE];
-        TResult result = deserialize(buffer, len, &recvPacket);
-        if (result == PACKET_OK)
-            handlePacket(&recvPacket);
-        else if (result == PACKET_BAD) {
-            sendBadPacket();
-        } else if (result == PACKET_CHECKSUM_BAD) {
-            sendBadChecksum();
-        }
+    TResult result = readPacket(&recvPacket);
+
+    if (result == PACKET_OK)
+        handlePacket(&recvPacket);
+    else if (result == PACKET_BAD) {
+        sendBadPacket();
+    } else if (result == PACKET_CHECKSUM_BAD) {
+        sendBadChecksum();
     }
 }

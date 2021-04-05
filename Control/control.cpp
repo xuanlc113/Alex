@@ -155,7 +155,7 @@ void *writerThread(void *conn) {
                 printf("BAD COMMAND\n");
         }
         flushinp();
-        usleep(200000);
+        usleep(500000);
     }
 
     printf("Exiting keyboard thread\n");
