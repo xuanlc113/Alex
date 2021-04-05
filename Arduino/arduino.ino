@@ -96,83 +96,39 @@ void sendResponse(TPacket *packet) {
     writeSerial(buffer, len);
 }
 
-// Set up the serial connection. For now we are using
-// Arduino Wiring, you will replace this later
-// with bare-metal code.
-void setupSerial() {
-    Serial.begin(9600);
+void setupSerial() { Serial.begin(9600); }
 
-    // USCR0C = 0b00000110;
-    // setBaud(57600);
-    // UCSR0A = 0;
-}
-
-// void setBaud(int baudRate) {
-//     int b = round(F_CPU / (16.0 * baudRate)) - 1;
-//     UBRR0H = (b >> 8);
-//     UBRR0L = b;
-// }
-
-void startSerial() {
-    // UCSR0B = 0b10111000;
-}
-
-// volatile int receiveMsg = 0;
-// volatile char buffer[PACKET_SIZE];
-
-// ISR(USART_RX_VECT) { // markers allow for continuous sending
-//     int isReceiving = 0;
-//     char startMarker = '<';
-//     char endMarker = '>';
-//     int i = 0;
-
-//     unsigned char data = UDR0;
-
-//     if (data == startMarker) {
-//         data = UDR0;
-//         while (data != endMarker) {
-//             buffer[i++] = data;
-//             data = UDR0;
-//         }
-//         receiveMsg = 1;
-//     }
-// }
-
-// ISR(USART_UDRE_VECT) {} // do we need this>
-
-// Read the serial port. Returns the read character in
-// ch if available. Also returns TRUE if ch is valid.
-// This will be replaced later with bare-metal code.
 int readSerial(char *buffer) {
     int count = 0;
-
-    while (Serial.available()) buffer[count++] = Serial.read();
+    while (Serial.available()) {
+        buffer[count++] = Serial.read();
+    }
 
     return count;
-
-    // for (int i = 0; i < 100; i++) {
-    //     while ((USCR0A & 0b10000000) == 0)
-    //         ;
-    //     buffer[i] = UDR0;
-    // }
 }
 
-// Write to the serial port. Replaced later with
-// bare-metal code
-void writeSerial(const char *buffer, int len) {
-    Serial.write(buffer, len);
-
-    // for (int i = 0; i < len; i++) {
-    //     while ((USCR0A & 0b00100000) == 0)
-    //         ;
-    //     UDR0 = *buffer++;
-    // }
-}
+void writeSerial(const char *buffer, int len) { Serial.write(buffer, len); }
 
 /*
    Alex's motor drivers.
 
 */
+
+ISR(TIMER0_COMPA_vect) {  // right fwd
+    PORTD ^= 1 << 6;
+}
+
+ISR(TIMER0_COMPB_vect) {  // right bwd
+    PORTD ^= 1 << 5;
+}
+
+ISR(TIMER2_COMPA_vect) {  // left fwd
+    PORTB ^= 1 << 3;
+}
+
+ISR(TIMER2_COMPB_vect) {  // left bwd
+    PORTB ^= 1 << 2;
+}
 
 void setupMotors() {
     //  DDRD |= 0b01100000;
@@ -188,67 +144,87 @@ void setupMotors() {
     //  OCR2A = 128;
     //  OCR2B = 128;
     //  TCCR2A = 0b10000001;
-}
 
-// Start the PWM for Alex's motors.
-// We will implement this later. For now it is
-// blank.
-void startMotors() {
-    //  TCCR0B |= 0b00000011;
-    //  TCCR2B |= 0b00000011;
-}
+    DDRB |= 0b00001100;
+    DDRD |= 0b01100000;
+    PORTB &= ~(1 << 3) & ~(1 << 2);
+    PORTD &= ~(1 << 6) & ~(1 << 5);
+    TCCR0A |= 0b10100001;
+    TCNT0 = 0;
+    OCR0A = 128;
+    OCR0B = 128;
+    TIMSK0 |= (1 << OCIE0A) | (1 << OCIE0B);
 
-// Convert percentages to PWM values
-int pwmVal(float speed) {
-    if (speed < 0.0) speed = 0;
+    TCCR2A |= 0b10100001;
+    TCNT2 = 0;
+    OCR2A = 128;
+    OCR2B = 128;
+    TIMSK2 |= (1 << OCIE0A) | (1 << OCIE0B);
 
-    if (speed > 100.0) speed = 100.0;
-
-    return (int)((speed / 100.0) * 255.0);
+    TCCR2B |= (1 << CS01) | (1 << CS00);
+    TCCR0B |= (1 << CS01) | (1 << CS00);
 }
 
 void forward() {
-    analogWrite(LF, 100);
-    analogWrite(RF, 100);
-    analogWrite(LR, 0);
-    analogWrite(RR, 0);
-    delay(100);
-    stop();
+    // analogWrite(LF, 100);
+    // analogWrite(RF, 100);
+    // analogWrite(LR, 0);
+    // analogWrite(RR, 0);
+    // delay(100);
+    // stop();
+    PORTD |= 1 << 6;
+    PORTB |= 1 << 3;
+    PORTD &= ~(1 << 5);
+    PORTB &= ~(1 << 2);
 }
 
 void reverse() {
-    analogWrite(LR, 100);
-    analogWrite(RR, 100);
-    analogWrite(LF, 0);
-    analogWrite(RF, 0);
-    delay(100);
-    stop();
+    // analogWrite(LR, 100);
+    // analogWrite(RR, 100);
+    // analogWrite(LF, 0);
+    // analogWrite(RF, 0);
+    // delay(100);
+    // stop();
+    PORTD |= 1 << 5;
+    PORTB |= 1 << 2;
+    PORTD &= ~(1 << 6);
+    PORTB &= ~(1 << 3);
 }
 
 void left() {
-    analogWrite(LR, 100);
-    analogWrite(RF, 100);
-    analogWrite(LF, 0);
-    analogWrite(RR, 0);
-    delay(100);
-    stop();
+    // analogWrite(LR, 100);
+    // analogWrite(RF, 100);
+    // analogWrite(LF, 0);
+    // analogWrite(RR, 0);
+    // delay(100);
+    // stop();
+    PORTD |= 1 << 5;
+    PORTB |= 1 << 3;
+    PORTD &= ~(1 << 6);
+    PORTB &= ~(1 << 2);
 }
 
 void right() {
-    analogWrite(RR, 100);
-    analogWrite(LF, 100);
-    analogWrite(LR, 0);
-    analogWrite(RF, 0);
-    delay(100);
-    stop();
+    // analogWrite(RR, 100);
+    // analogWrite(LF, 100);
+    // analogWrite(LR, 0);
+    // analogWrite(RF, 0);
+    // delay(100);
+    // stop();
+    PORTD |= 1 << 6;
+    PORTB |= 1 << 2;
+    PORTD &= ~(1 << 5);
+    PORTB &= ~(1 << 3);
 }
 
 // Stop Alex. To replace with bare-metal code later.
 void stop() {
-    analogWrite(LF, 0);
-    analogWrite(LR, 0);
-    analogWrite(RF, 0);
-    analogWrite(RR, 0);
+    // analogWrite(LF, 0);
+    // analogWrite(LR, 0);
+    // analogWrite(RF, 0);
+    // analogWrite(RR, 0);
+    PORTB &= ~(1 << 3) & ~(1 << 2);
+    PORTD &= ~(1 << 6) & ~(1 << 5);
 }
 
 /*
@@ -320,9 +296,7 @@ void waitForHello() {
 void setup() {
     cli();
     setupSerial();
-    startSerial();
     setupMotors();
-    startMotors();
     // setupColorSensor();
     sei();
 }
@@ -350,15 +324,29 @@ void handlePacket(TPacket *packet) {
 void loop() {
     // senseColor();
 
+    // TPacket recvPacket;  // This holds commands from the Pi
+
+    // TResult result = readPacket(&recvPacket);
+
+    // if (result == PACKET_OK)
+    //     handlePacket(&recvPacket);
+    // else if (result == PACKET_BAD) {
+    //     sendBadPacket();
+    // } else if (result == PACKET_CHECKSUM_BAD) {
+    //     sendBadChecksum();
+    // }
+
     TPacket recvPacket;  // This holds commands from the Pi
 
-    TResult result = readPacket(&recvPacket);
-
-    if (result == PACKET_OK)
-        handlePacket(&recvPacket);
-    else if (result == PACKET_BAD) {
-        sendBadPacket();
-    } else if (result == PACKET_CHECKSUM_BAD) {
-        sendBadChecksum();
+    if (receiveMsg) {
+        char buffer[PACKET_SIZE];
+        TResult result = deserialize(buffer, len, &recvPacket);
+        if (result == PACKET_OK)
+            handlePacket(&recvPacket);
+        else if (result == PACKET_BAD) {
+            sendBadPacket();
+        } else if (result == PACKET_CHECKSUM_BAD) {
+            sendBadChecksum();
+        }
     }
 }

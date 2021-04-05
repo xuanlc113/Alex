@@ -138,6 +138,7 @@ void *writerThread(void *conn) {
             case 'S':
             case 'd':
             case 'D':
+            case 'x':
                 buffer[1] = ch;
                 sendData(conn, buffer, sizeof(buffer));
                 break;

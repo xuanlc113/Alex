@@ -226,11 +226,11 @@ void handleCommand(void *conn, const char *buffer) {
             uartSendPacket(&commandPacket);
             break;
 
-            // case 's':
-            // case 'S':
-            //     commandPacket.command = COMMAND_STOP;
-            //     uartSendPacket(&commandPacket);
-            //     break;
+        case 'x':
+        case 'X':
+            commandPacket.command = COMMAND_STOP;
+            uartSendPacket(&commandPacket);
+            break;
 
             // case 'c':
             // case 'C':
