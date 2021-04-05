@@ -66,7 +66,7 @@ setupColorSensor() {
     } else {
       gammatable[i] = x;
     }
-    //Serial.println(gammatable[i]);
+    Serial.println(gammatable[i]);
   }
 }
 
