@@ -8,6 +8,11 @@
 // Packet types, error codes, etc.
 #include "client_lib/constants.h"
 
+#define CA_CERT_FNAME "cert/signing.pem"
+#define CLIENT_CERT_FNAME "controlkey/laptop.crt"
+#define CLIENT_KEY_FNAME "controlkey/laptop.key"
+#define SERVER_NAME_ON_CERT "www.alex.com"
+
 // Tells us that the network is running.
 static volatile int networkActive = 0;
 
@@ -77,11 +82,8 @@ void handleNetwork(const char *buffer, int len) {
 
 void sendData(void *conn, const char *buffer, int len) {
     int c;
-    // printf("\nSENDING %d BYTES DATA\n\n", len);
     if (networkActive) {
-        /* TODO: Insert SSL write here to write buffer to network */
         c = sslWrite(conn, buffer, len);
-        /* END TODO */
         networkActive = (c > 0);
     }
 }
@@ -91,11 +93,8 @@ void *readerThread(void *conn) {
     int len;
 
     while (networkActive) {
-        /* TODO: Insert SSL read here into buffer */
         len = sslRead(conn, buffer, sizeof(buffer));
         printf("read %d bytes from server.\n", len);
-
-        /* END TODO */
 
         networkActive = (len > 0);
 
@@ -104,10 +103,8 @@ void *readerThread(void *conn) {
 
     printf("Exiting network listener thread\n");
 
-    /* TODO: Stop the client loop and call EXIT_THREAD */
     stopClient();
     EXIT_THREAD(conn);
-    /* END TODO */
 }
 
 void flushInput() {
@@ -121,6 +118,7 @@ void *writerThread(void *conn) {
     int quit = 0;
 
     initscr();
+    nodelay(stdscr, TRUE);
     printf("Command (WASD, f=scan q=exit)\n");
     while (!quit) {
         char ch;
@@ -138,7 +136,6 @@ void *writerThread(void *conn) {
             case 'S':
             case 'd':
             case 'D':
-            case 'x':
                 buffer[1] = ch;
                 sendData(conn, buffer, sizeof(buffer));
                 break;
@@ -152,7 +149,8 @@ void *writerThread(void *conn) {
                 quit = 1;
                 break;
             default:
-                printf("BAD COMMAND\n");
+                buffer[1] = 'x';
+                sendData(conn, buffer, sizeof(buffer));
         }
         flushinp();
         usleep(500000);
@@ -160,26 +158,14 @@ void *writerThread(void *conn) {
 
     printf("Exiting keyboard thread\n");
 
-    /* TODO: Stop the client loop and call EXIT_THREAD */
     endwin();
     stopClient();
     EXIT_THREAD(conn);
-    /* END TODO */
 }
 
-/* TODO: #define filenames for the client private key, certificatea,
-   CA filename, etc. that you need to create a client */
-
-#define CA_CERT_FNAME "cert/signing.pem"
-#define CLIENT_CERT_FNAME "controlkey/laptop.crt"
-#define CLIENT_KEY_FNAME "controlkey/laptop.key"
-#define SERVER_NAME_ON_CERT "www.alex.com"
-/* END TODO */
 void connectToServer(const char *serverName, int portNum) {
-    /* TODO: Create a new client */
     createClient(serverName, portNum, 1, CA_CERT_FNAME, SERVER_NAME_ON_CERT, 1, CLIENT_CERT_FNAME,
                  CLIENT_KEY_FNAME, readerThread, writerThread);
-    /* END TODO */
 }
 
 int main(int ac, char **av) {
@@ -191,11 +177,7 @@ int main(int ac, char **av) {
     networkActive = 1;
     connectToServer(av[1], atoi(av[2]));
 
-    /* TODO: Add in while loop to prevent main from exiting while the
-    client loop is running */
-
     while (client_is_running())
         ;
-    /* END TODO */
     printf("\nMAIN exiting\n\n");
 }
