@@ -12,10 +12,6 @@
 
 unsigned int interval = 500;
 unsigned long prevMillis;
-#define LF 6   // Left forward pin
-#define LR 5   // Left reverse pin
-#define RF 10  // Right forward pin
-#define RR 11  // Right reverse pin
 
 // Reads in data from the serial port and
 // deserializes it.Returns deserialized
@@ -135,12 +131,14 @@ void setupMotors() {
 
     TCNT0 = 0;
     TIMSK0 |= 0b110;
+    TCCR0A |= 0b1;
     OCR0A = 128;
     OCR0B = 128;
     TCCR0B = 0b00000011;
 
     TCNT2 = 0;
     TIMSK2 |= 0b110;
+    TCCR2A |= 0b1;
     OCR2A = 180;
     OCR2B = 180;
     TCCR2B = 0b00000011;
@@ -270,9 +268,17 @@ void handlePacket(TPacket *packet) {
 void loop() {
     // senseColor();
     // forward();
-    //  while (millis() - prevMillis < interval);
-    //  prevMillis = millis();
-    //  reverse();
+    // while (millis() - prevMillis < interval)
+    //     ;
+    // prevMillis = millis();
+    // reverse();
+    // while (millis() - prevMillis < interval)
+    //     ;
+    // prevMillis = millis();
+    // stop();
+    // while (millis() - prevMillis < interval)
+    //     ;
+    // prevMillis = millis();
 
     TPacket recvPacket;  // This holds commands from the Pi
 
