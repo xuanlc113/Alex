@@ -10,9 +10,6 @@
 #include "constants.h"
 #include "packet.h"
 
-unsigned int interval = 500;
-unsigned long prevMillis;
-
 // Reads in data from the serial port and
 // deserializes it.Returns deserialized
 // data in "packet".
@@ -142,8 +139,6 @@ void setupMotors() {
     OCR2A = 180;
     OCR2B = 180;
     TCCR2B = 0b00000011;
-
-    prevMillis = millis();
 }
 
 void forward() {
@@ -178,7 +173,6 @@ void stop() {
 
 void handleCommand(TPacket *command) {
     switch (command->command) {
-        // For movement commands, pawwsram[0] = distance, param[1] = speed.
         case COMMAND_FORWARD:
             sendOK();
             forward();
@@ -266,20 +260,6 @@ void handlePacket(TPacket *packet) {
 }
 
 void loop() {
-    // senseColor();
-    // forward();
-    // while (millis() - prevMillis < interval)
-    //     ;
-    // prevMillis = millis();
-    // reverse();
-    // while (millis() - prevMillis < interval)
-    //     ;
-    // prevMillis = millis();
-    // stop();
-    // while (millis() - prevMillis < interval)
-    //     ;
-    // prevMillis = millis();
-
     TPacket recvPacket;  // This holds commands from the Pi
 
     TResult result = readPacket(&recvPacket);
