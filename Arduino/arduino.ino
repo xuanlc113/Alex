@@ -10,6 +10,8 @@
 #include "constants.h"
 #include "packet.h"
 
+unsigned int interval = 500;
+unsigned long prevMillis;
 #define LF 6   // Left forward pin
 #define LR 5   // Left reverse pin
 #define RF 10  // Right forward pin
@@ -117,117 +119,58 @@ void writeSerial(const char *buffer, int len) { Serial.write(buffer, len); }
 
 */
 
-ISR(TIMER0_COMPA_vect) {  // left bwd
-    PORTD ^= 1 << 6;
-}
+ISR(TIMER0_COMPA_vect) {}
 
-ISR(TIMER0_COMPB_vect) {  // left fwd
-    PORTD ^= 1 << 5;
-}
+ISR(TIMER0_COMPB_vect) {}
 
-// ISR(TIMER2_COMPA_vect) {  // right fwd
-//     //    PORTB ^= 1 << 3;
-//     //    PORTD ^= 1 << 6;
-//     PORTD = 1 << 6;
-// }
+ISR(TIMER2_COMPA_vect) {}
 
-// ISR(TIMER2_COMPB_vect) {  // right bwd
-//                           //    PORTB ^= 1 << 2;
-//     PORTD ^= 1 << 5;
-// }
+ISR(TIMER2_COMPB_vect) {}
 
+// right: 5, 6, TIMER 0
+// left: 3, 11, TIMER 2
 void setupMotors() {
-    DDRB = 0b00001100;
-    PORTB = 0b00001000;
-    DDRD = 0b01100000;
-    PORTD = 0;
+    DDRB = 0b00001000;
+    DDRD = 0b01101000;
 
-    TCCR0A |= 0b10100001;
     TCNT0 = 0;
+    TIMSK0 |= 0b110;
     OCR0A = 128;
     OCR0B = 128;
-    TIMSK0 |= 0b00000110;
+    TCCR0B = 0b00000011;
 
-    // TCCR2A |= 0b10100001;
-    // TCNT2 = 0;
-    // OCR2A = 128;
-    // OCR2B = 128;
-    // TIMSK2 |= 0b00000110;
+    TCNT2 = 0;
+    TIMSK2 |= 0b110;
+    OCR2A = 180;
+    OCR2B = 180;
+    TCCR2B = 0b00000011;
 
-    // TCCR2B |= 0b11;
-    TCCR0B |= 0b11;
+    prevMillis = millis();
 }
 
 void forward() {
-    // DDRB = 0b00001000;
-    DDRD = 0b00100000;
-    // analogWrite(LF, 255);
-    // analogWrite(RF, 255);
-    // analogWrite(LR, 0);
-    // analogWrite(RR, 0);
-    // delay(100);
-    // stop();
-    //    PORTD |= 1 << 6;
-    //    PORTB |= 1 << 3;
-    //    PORTD &= ~(1 << 5);
-    //    PORTB &= ~(1 << 2);
-
-    //    PORTB = 0b00001000;
-    //    PORTD = 0b00100000;
+    TCCR0A = 0b10000001;
+    TCCR2A = 0b00100001;
 }
 
 void reverse() {
-    analogWrite(LR, 255);
-    analogWrite(RR, 255);
-    analogWrite(LF, 0);
-    analogWrite(RF, 0);
-    delay(100);
-    stop();
-    //    PORTD |= 1 << 5;
-    //    PORTB |= 1 << 2;
-    // PORTB = 0b00001000;
-    // PORTD = 0b00000000;
+    TCCR0A = 0b00100001;
+    TCCR2A = 0b10000001;
 }
 
 void left() {
-    analogWrite(LR, 255);
-    analogWrite(RF, 255);
-    analogWrite(LF, 0);
-    analogWrite(RR, 0);
-    delay(100);
-    stop();
-    //    PORTD |= 1 << 5;
-    //    PORTB |= 1 << 3;
-    //    PORTD &= ~(1 << 6);
-    //    PORTB &= ~(1 << 2);
-    // PORTB = 0b00000000;
-    //     PORTD = 0b01000000;
+    TCCR0A = 0b10000001;
+    TCCR2A = 0b10000001;
 }
 
 void right() {
-    analogWrite(RR, 255);
-    analogWrite(LF, 255);
-    analogWrite(LR, 0);
-    analogWrite(RF, 0);
-    delay(100);
-    stop();
-    //    PORTD |= 1 << 6;
-    //    PORTB |= 1 << 2;
-    //    PORTD &= ~(1 << 5);
-    //    PORTB &= ~(1 << 3);
-    // PORTB = 0b00000000;
-    //     PORTD = 0b00100000;
+    TCCR0A = 0b00100001;
+    TCCR2A = 0b00100001;
 }
 
-// Stop Alex. To replace with bare-metal code later.
 void stop() {
-    analogWrite(LF, 0);
-    analogWrite(LR, 0);
-    analogWrite(RF, 0);
-    analogWrite(RR, 0);
-
-    //   PORTB = 0b0000000;
-    //     PORTD = 0b00000000;
+    TCCR0A = 0b00000001;
+    TCCR2A = 0b00000001;
 }
 
 /*
@@ -326,18 +269,10 @@ void handlePacket(TPacket *packet) {
 
 void loop() {
     // senseColor();
-    forward();
-    // delay(1000);
-    // stop();
-    // reverse();
-    // delay(1000);
-    // stop();
-    // left();
-    // delay(1000);
-    // stop();
-    // right();
-    // delay(1000);
-    // stop();
+    // forward();
+    //  while (millis() - prevMillis < interval);
+    //  prevMillis = millis();
+    //  reverse();
 
     TPacket recvPacket;  // This holds commands from the Pi
 
