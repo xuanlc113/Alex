@@ -1,0 +1,47 @@
+CA key pass: alex
+
+CA Cert: www.cert.com
+alex : www.alex.com
+control(laptop) : www.control.com
+
+Country Name (2 letter code) [AU]:SG
+State or Province Name (full name) [Some-State]:SG
+Locality Name (eg, city) []:SG
+Organization Name (eg, company) [Internet Widgits Pty Ltd]:alex
+Organizational Unit Name (eg, section) []:alex
+Common Name (e.g. server FQDN or YOUR name) []:www.alex.com
+Email Address []:
+
+A challenge password []:alex_challenge
+
+data between pi and laptop have no fixed format
+data between pi and arduino uses TPacket
+
+bit 1 => packetType
+
+NET_ERROR_PACKET=0,
+bit 2 => error type
+
+NET_STATUS_PACKET=1,
+might not need
+
+NET_MESSAGE_PACKET=2,
+data => color
+
+NET_COMMAND_PACKET=3
+
+w
+a
+s
+d
+
+f (scan)
+
+TPacket
+    packetType = PACKET_TYPE_COMMAND,
+    command = RESP_OK?
+    dummy
+    data[] = data[0] = wasdf
+
+
+
