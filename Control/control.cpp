@@ -19,7 +19,7 @@ static volatile int networkActive = 0;
 void handleError(const char *buffer) {
     switch (buffer[1]) {
         case RESP_OK:
-            printf("Command / Status OK\n");
+            // printf("Command / Status OK\n");
             break;
 
         case RESP_BAD_PACKET:
@@ -94,7 +94,6 @@ void *readerThread(void *conn) {
 
     while (networkActive) {
         len = sslRead(conn, buffer, sizeof(buffer));
-        printf("read %d bytes from server.\n", len);
 
         networkActive = (len > 0);
 
@@ -118,8 +117,7 @@ void *writerThread(void *conn) {
     int quit = 0;
 
     initscr();
-    nodelay(stdscr, TRUE);
-    printf("Command (WASD, f=scan q=exit)\n");
+    printf("Command (WASDX, f=scan q=exit)\n");
     while (!quit) {
         char ch;
         ch = getch();
@@ -136,9 +134,8 @@ void *writerThread(void *conn) {
             case 'S':
             case 'd':
             case 'D':
-                buffer[1] = ch;
-                sendData(conn, buffer, sizeof(buffer));
-                break;
+            case 'x':
+            case 'X':
             case 'f':
             case 'F':
                 buffer[1] = ch;
@@ -149,8 +146,7 @@ void *writerThread(void *conn) {
                 quit = 1;
                 break;
             default:
-                buffer[1] = 'x';
-                sendData(conn, buffer, sizeof(buffer));
+                printf("Bad Command\n");
         }
         flushinp();
         usleep(500000);

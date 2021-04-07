@@ -235,7 +235,7 @@ void setup() {
     cli();
     setupSerial();
     setupMotors();
-    // setupColorSensor();
+    setupColorSensor();
     sei();
 }
 
