@@ -228,7 +228,7 @@ void waitForHello() {
             sendBadPacket();
         } else if (result == PACKET_CHECKSUM_BAD)
             sendBadChecksum();
-    }  // !exit
+    }
 }
 
 void setup() {
