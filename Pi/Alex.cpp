@@ -20,7 +20,7 @@
 #define CLIENT_NAME "www.control.com"
 
 // Our network buffer consists of 1 byte of packet type, and 128 bytes of data
-#define BUF_LEN 129
+#define BUF_LEN 65  // 2  // 129
 
 static volatile int networkActive;
 
@@ -44,7 +44,7 @@ void handleErrorResponse(TPacket *packet) {
 
 void handleMessage(TPacket *packet) {
     char data[33];
-    printf("UART MESSAGE PACKET: %s\n", packet->data);
+    printf("UART MESSAGE PACKET: %c\n", packet->data);
     data[0] = NET_MESSAGE_PACKET;
     memcpy(&data[1], packet->data, sizeof(packet->data));
     sendNetworkData(data, sizeof(data));
@@ -70,6 +70,7 @@ void handleResponse(TPacket *packet) {
             break;
 
         case RESP_STATUS:
+            printf("Status OK\n");
             handleStatus(packet);
             break;
 
@@ -172,7 +173,7 @@ void handleCommand(void *conn, const char *buffer) {
     TPacket commandPacket;
 
     commandPacket.packetType = PACKET_TYPE_COMMAND;
-    printf("COMMAND RECEIVED: %c %d %d\n", cmd);
+    printf("COMMAND RECEIVED: %c\n", cmd);
 
     switch (cmd) {
         case 'w':

@@ -70,7 +70,7 @@ setupColorSensor() {
   }
 }
 
-senseColor() {
+char senseColor() {
   float red, green, blue;
 
   tcs.setInterrupt(false);  // turn on LED

@@ -151,12 +151,12 @@ void reverse() {
     TCCR2A = 0b10000001;
 }
 
-void left() {
+void right() {
     TCCR0A = 0b10000001;
     TCCR2A = 0b10000001;
 }
 
-void right() {
+void left() {
     TCCR0A = 0b00100001;
     TCCR2A = 0b00100001;
 }
@@ -199,6 +199,7 @@ void handleCommand(TPacket *command) {
             break;
 
         case COMMAND_GET_STATS:
+            sendMessage("gstats");
             sendStatus();
             break;
 
