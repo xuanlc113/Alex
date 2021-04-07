@@ -1,14 +1,16 @@
 #include <Adafruit_TCS34725.h>
-#include <avr/interrupt.h>
-#include <avr/io.h>
 #include <math.h>
 #include <serialize.h>
 #include <stdarg.h>
 
-#include "Arduino.h"
 #include "colorsensor.h"
 #include "constants.h"
 #include "packet.h"
+
+#define LF 6   // Left forward pin
+#define LR 5   // Left reverse pin
+#define RF 10  // Right forward pin
+#define RR 11  // Right reverse pin
 
 // Reads in data from the serial port and
 // deserializes it.Returns deserialized
@@ -94,76 +96,159 @@ void sendResponse(TPacket *packet) {
     writeSerial(buffer, len);
 }
 
-void setupSerial() { Serial.begin(9600); }
+// Set up the serial connection. For now we are using
+// Arduino Wiring, you will replace this later
+// with bare-metal code.
+void setupSerial() {
+    Serial.begin(9600);
 
-int readSerial(char *buffer) {
-    int count = 0;
-    while (Serial.available()) {
-        buffer[count++] = Serial.read();
-    }
-
-    return count;
+    // USCR0C = 0b00000110;
+    // setBaud(57600);
+    // UCSR0A = 0;
 }
 
-void writeSerial(const char *buffer, int len) { Serial.write(buffer, len); }
+// void setBaud(int baudRate) {
+//     int b = round(F_CPU / (16.0 * baudRate)) - 1;
+//     UBRR0H = (b >> 8);
+//     UBRR0L = b;
+// }
+
+void startSerial() {
+    // UCSR0B = 0b10111000;
+}
+
+// volatile int receiveMsg = 0;
+// volatile char buffer[PACKET_SIZE];
+
+// ISR(USART_RX_VECT) { // markers allow for continuous sending
+//     int isReceiving = 0;
+//     char startMarker = '<';
+//     char endMarker = '>';
+//     int i = 0;
+
+//     unsigned char data = UDR0;
+
+//     if (data == startMarker) {
+//         data = UDR0;
+//         while (data != endMarker) {
+//             buffer[i++] = data;
+//             data = UDR0;
+//         }
+//         receiveMsg = 1;
+//     }
+// }
+
+// ISR(USART_UDRE_VECT) {} // do we need this>
+
+// Read the serial port. Returns the read character in
+// ch if available. Also returns TRUE if ch is valid.
+// This will be replaced later with bare-metal code.
+int readSerial(char *buffer) {
+    int count = 0;
+
+    while (Serial.available()) buffer[count++] = Serial.read();
+
+    return count;
+
+    // for (int i = 0; i < 100; i++) {
+    //     while ((USCR0A & 0b10000000) == 0)
+    //         ;
+    //     buffer[i] = UDR0;
+    // }
+}
+
+// Write to the serial port. Replaced later with
+// bare-metal code
+void writeSerial(const char *buffer, int len) {
+    Serial.write(buffer, len);
+
+    // for (int i = 0; i < len; i++) {
+    //     while ((USCR0A & 0b00100000) == 0)
+    //         ;
+    //     UDR0 = *buffer++;
+    // }
+}
 
 /*
    Alex's motor drivers.
 
 */
 
-ISR(TIMER0_COMPA_vect) {}
-
-ISR(TIMER0_COMPB_vect) {}
-
-ISR(TIMER2_COMPA_vect) {}
-
-ISR(TIMER2_COMPB_vect) {}
-
-// right: 5, 6, TIMER 0
-// left: 3, 11, TIMER 2
 void setupMotors() {
-    DDRB = 0b00001000;
-    DDRD = 0b01101000;
+    //  DDRD |= 0b01100000;
+    //  DDRB |= 0b00001100;
+    //  TCNT0 = 0;
+    //  TIMSK0 |= 0b110; // OCIEA = 1 OCIEB = 1
+    //  OCR0A = 128;
+    //  OCR0B = 128;
+    //  TCCR0A = 0b10000001;
+    //
+    //  TCNT2 = 0;
+    //  TIMSK2 |= 0b110; // OCIEA = 1 OCIEB = 1
+    //  OCR2A = 128;
+    //  OCR2B = 128;
+    //  TCCR2A = 0b10000001;
+}
 
-    TCNT0 = 0;
-    TIMSK0 |= 0b110;
-    TCCR0A |= 0b1;
-    OCR0A = 128;
-    OCR0B = 128;
-    TCCR0B = 0b00000011;
+// Start the PWM for Alex's motors.
+// We will implement this later. For now it is
+// blank.
+void startMotors() {
+    //  TCCR0B |= 0b00000011;
+    //  TCCR2B |= 0b00000011;
+}
 
-    TCNT2 = 0;
-    TIMSK2 |= 0b110;
-    TCCR2A |= 0b1;
-    OCR2A = 180;
-    OCR2B = 180;
-    TCCR2B = 0b00000011;
+// Convert percentages to PWM values
+int pwmVal(float speed) {
+    if (speed < 0.0) speed = 0;
+
+    if (speed > 100.0) speed = 100.0;
+
+    return (int)((speed / 100.0) * 255.0);
 }
 
 void forward() {
-    TCCR0A = 0b10000001;
-    TCCR2A = 0b00100001;
+    analogWrite(LF, 100);
+    analogWrite(RF, 100);
+    analogWrite(LR, 0);
+    analogWrite(RR, 0);
+    delay(100);
+    stop();
 }
 
 void reverse() {
-    TCCR0A = 0b00100001;
-    TCCR2A = 0b10000001;
+    analogWrite(LR, 100);
+    analogWrite(RR, 100);
+    analogWrite(LF, 0);
+    analogWrite(RF, 0);
+    delay(100);
+    stop();
 }
 
 void left() {
-    TCCR0A = 0b10000001;
-    TCCR2A = 0b10000001;
+    analogWrite(LR, 100);
+    analogWrite(RF, 100);
+    analogWrite(LF, 0);
+    analogWrite(RR, 0);
+    delay(100);
+    stop();
 }
 
 void right() {
-    TCCR0A = 0b00100001;
-    TCCR2A = 0b00100001;
+    analogWrite(RR, 100);
+    analogWrite(LF, 100);
+    analogWrite(LR, 0);
+    analogWrite(RF, 0);
+    delay(100);
+    stop();
 }
 
+// Stop Alex. To replace with bare-metal code later.
 void stop() {
-    TCCR0A = 0b00000001;
-    TCCR2A = 0b00000001;
+    analogWrite(LF, 0);
+    analogWrite(LR, 0);
+    analogWrite(RF, 0);
+    analogWrite(RR, 0);
 }
 
 /*
@@ -173,6 +258,7 @@ void stop() {
 
 void handleCommand(TPacket *command) {
     switch (command->command) {
+        // For movement commands, pawwsram[0] = distance, param[1] = speed.
         case COMMAND_FORWARD:
             sendOK();
             forward();
@@ -234,7 +320,9 @@ void waitForHello() {
 void setup() {
     cli();
     setupSerial();
+    startSerial();
     setupMotors();
+    startMotors();
     // setupColorSensor();
     sei();
 }
@@ -260,6 +348,8 @@ void handlePacket(TPacket *packet) {
 }
 
 void loop() {
+    // senseColor();
+
     TPacket recvPacket;  // This holds commands from the Pi
 
     TResult result = readPacket(&recvPacket);
