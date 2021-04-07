@@ -66,7 +66,7 @@ setupColorSensor() {
     } else {
       gammatable[i] = x;
     }
-    //Serial.println(gammatable[i]);
+    Serial.println(gammatable[i]);
   }
 }
 
@@ -81,13 +81,19 @@ senseColor() {
 
   tcs.setInterrupt(true);  // turn off LED
 
-  Serial.print("R:\t"); Serial.print(int(red));
-  Serial.print("\tG:\t"); Serial.print(int(green));
-  Serial.print("\tB:\t"); Serial.print(int(blue));
+  int redval = red - green;
 
-  //  Serial.print("\t");
-  //  Serial.print((int)red, HEX); Serial.print((int)green, HEX); Serial.print((int)blue, HEX);
-  Serial.print("\n");
+  if(redval > 0) {
+    return 1;
+  }else {
+    return 0;
+  }
+
+  //Serial.print("R:\t"); Serial.print(redval);
+//  Serial.print("\tG:\t"); Serial.print(int(green));
+//  Serial.print("\tB:\t"); Serial.print(int(blue));
+  
+  //Serial.print("\n");
 
 #if defined(ARDUINO_ARCH_ESP32)
   ledcWrite(1, gammatable[(int)red]);
