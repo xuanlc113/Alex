@@ -172,7 +172,7 @@ void handleCommand(void *conn, const char *buffer) {
     TPacket commandPacket;
 
     commandPacket.packetType = PACKET_TYPE_COMMAND;
-    printf("COMMAND RECEIVED: %c\n", cmd);
+    printf("COMMAND RECEIVED: %c %d %d\n", cmd);
 
     switch (cmd) {
         case 'w':

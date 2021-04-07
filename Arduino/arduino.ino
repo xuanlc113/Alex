@@ -260,7 +260,6 @@ void handlePacket(TPacket *packet) {
 }
 
 void loop() {
-  forward();
     TPacket recvPacket;  // This holds commands from the Pi
 
     TResult result = readPacket(&recvPacket);
