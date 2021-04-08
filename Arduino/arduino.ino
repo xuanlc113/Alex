@@ -1,18 +1,16 @@
 #include <Adafruit_TCS34725.h>
-#include <avr/interrupt.h>
-#include <avr/io.h>
-#include <math.h>
 #include <serialize.h>
-#include <stdarg.h>
 
-#include "Arduino.h"
 #include "colorsensor.h"
 #include "constants.h"
 #include "packet.h"
 
-// Reads in data from the serial port and
-// deserializes it.Returns deserialized
-// data in "packet".
+/*
+
+    Alex Communication Routines.
+
+*/
+
 TResult readPacket(TPacket *packet) {
     char buffer[PACKET_SIZE];
     int len;
@@ -25,46 +23,36 @@ TResult readPacket(TPacket *packet) {
         return deserialize(buffer, len, packet);
 }
 
-void sendStatus() {  // changed to send color
+void sendStatus() {
     TPacket statusPacket;
     statusPacket.packetType = PACKET_TYPE_RESPONSE;
     statusPacket.command = RESP_STATUS;
-    statusPacket.params[0] = senseColor();
+    statusPacket.params[0] = 1; // senseColor();
     sendResponse(&statusPacket);
 }
 
-void sendMessage(const char *message) {  // Sends text messages back to the Pi
+void sendMessage(const char *message) {
     TPacket messagePacket;
     messagePacket.packetType = PACKET_TYPE_MESSAGE;
     strncpy(messagePacket.data, message, MAX_STR_LEN);
     sendResponse(&messagePacket);
 }
 
-void dbprint(char *format, ...) {
-    va_list args;
-    char buffer[128];
-    va_start(args, format);
-    vsprintf(buffer, format, args);
-    sendMessage(buffer);
-}
-
-void sendBadPacket() {  // Tell the Pi that it sent us a packet with a bad magic number.
+void sendBadPacket() {
     TPacket badPacket;
     badPacket.packetType = PACKET_TYPE_ERROR;
     badPacket.command = RESP_BAD_PACKET;
     sendResponse(&badPacket);
 }
 
-void sendBadChecksum() {  // Tell the Pi that it sent us a packet with a bad checksum.
-
+void sendBadChecksum() {
     TPacket badChecksum;
     badChecksum.packetType = PACKET_TYPE_ERROR;
     badChecksum.command = RESP_BAD_CHECKSUM;
     sendResponse(&badChecksum);
 }
 
-void sendBadCommand() {  // Tell the Pi that we don't understand its command sent to us.
-
+void sendBadCommand() {
     TPacket badCommand;
     badCommand.packetType = PACKET_TYPE_ERROR;
     badCommand.command = RESP_BAD_COMMAND;
@@ -85,7 +73,6 @@ void sendOK() {
     sendResponse(&okPacket);
 }
 
-// Takes a packet, serializes it then sends it out over the serial port.
 void sendResponse(TPacket *packet) {
     char buffer[PACKET_SIZE];
     int len;
@@ -98,9 +85,8 @@ void setupSerial() { Serial.begin(9600); }
 
 int readSerial(char *buffer) {
     int count = 0;
-    while (Serial.available()) {
-        buffer[count++] = Serial.read();
-    }
+
+    while (Serial.available()) buffer[count++] = Serial.read();
 
     return count;
 }
@@ -108,7 +94,8 @@ int readSerial(char *buffer) {
 void writeSerial(const char *buffer, int len) { Serial.write(buffer, len); }
 
 /*
-   Alex's motor drivers.
+
+    Alex's motor drivers.
 
 */
 
@@ -167,7 +154,8 @@ void stop() {
 }
 
 /*
-   Alex's setup and run codes
+
+    Alex's setup and run codes
 
 */
 
@@ -199,6 +187,7 @@ void handleCommand(TPacket *command) {
             break;
 
         case COMMAND_GET_STATS:
+            sendOK();
             sendStatus();
             break;
 
@@ -228,14 +217,14 @@ void waitForHello() {
             sendBadPacket();
         } else if (result == PACKET_CHECKSUM_BAD)
             sendBadChecksum();
-    }  // !exit
+    }
 }
 
 void setup() {
     cli();
     setupSerial();
     setupMotors();
-     setupColorSensor();
+    setupColorSensor();
     sei();
 }
 
@@ -255,20 +244,18 @@ void handlePacket(TPacket *packet) {
             break;
 
         case PACKET_TYPE_HELLO:
-            sendOK();
             break;
     }
 }
 
 void loop() {
-    //  forward();
-    TPacket recvPacket;  // This holds commands from the Pi
+    TPacket recvPacket;
 
     TResult result = readPacket(&recvPacket);
 
-    if (result == PACKET_OK) {
+    if (result == PACKET_OK)
         handlePacket(&recvPacket);
-    } else if (result == PACKET_BAD) {
+    else if (result == PACKET_BAD) {
         sendBadPacket();
     } else if (result == PACKET_CHECKSUM_BAD) {
         sendBadChecksum();

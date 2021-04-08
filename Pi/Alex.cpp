@@ -1,17 +1,19 @@
-#include "server_lib/constants.h"
-#include "server_lib/make_tls_server.h"
-#include "server_lib/netconstants.h"
-#include "server_lib/packet.h"
-#include "server_lib/serial.h"
-#include "server_lib/serialize.h"
-#include "server_lib/tls_common_lib.h"
+#include "constants.h"
+#include "make_tls_server.h"
+#include "netconstants.h"
+#include "packet.h"
+#include "serial.h"
+#include "serialize.h"
+#include "tls_common_lib.h"
 
 #define PORT_NAME "/dev/ttyACM0"
 
-#define BAUD_RATE B57600
+#define BAUD_RATE B9600
 
-// TLS Port Number
 #define SERVER_PORT 5000
+
+// Our network buffer consists of 1 byte of packet type, and 128 bytes of data
+#define BUF_LEN 129
 
 // CA Keys
 #define KEY_FNAME "pikey/alex.key"
@@ -19,19 +21,17 @@
 #define CA_CERT_FNAME "cert/signing.pem"
 #define CLIENT_NAME "www.control.com"
 
-// Our network buffer consists of 1 byte of packet type, and 128 bytes of data
-#define BUF_LEN 129
-
 static volatile int networkActive;
 
 static void *tls_conn = NULL;
 
 /*
 
-Alex Serial Routines to the Arduino
+    Alex Serial Routines to the Arduino
 
 */
 
+// Prototype for sendNetworkData
 void sendNetworkData(const char *, int);
 
 void handleErrorResponse(TPacket *packet) {
@@ -146,7 +146,7 @@ void *uartReceiveThread(void *p) {
 
 /*
 
-Alex Network Routines
+    Alex Network Routines
 
 */
 
@@ -224,7 +224,7 @@ void handleNetworkData(void *conn, const char *buffer, int len) {
         recent client, so we just simply store conn, which contains the TLS
         connection, in a global variable called tls_conn */
 
-    tls_conn = conn;
+    tls_conn = conn;  // This is used by sendNetworkData
 
     if (buffer[0] == NET_COMMAND_PACKET) handleCommand(conn, buffer);
 }
@@ -236,7 +236,7 @@ void *worker(void *conn) {
 
     while (networkActive) {
         len = sslRead(conn, buffer, sizeof(buffer));
-        // As long as we are getting data, network is active
+
         networkActive = (len > 0);
 
         if (len > 0)
@@ -245,7 +245,6 @@ void *worker(void *conn) {
             perror("ERROR READING NETWORK: ");
     }
 
-    // Reset tls_conn to NULL.
     tls_conn = NULL;
     EXIT_THREAD(conn);
 }

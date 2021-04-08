@@ -1,12 +1,8 @@
+#include <ncurses.h>
 
-// Routines to create a TLS client
-#include "make_tls_client.h"
-
-// Network packet types
-#include "netconstants.h"
-
-// Packet types, error codes, etc.
 #include "constants.h"
+#include "make_tls_client.h"
+#include "netconstants.h"
 
 #define CA_CERT_FNAME "cert/signing.pem"
 #define CLIENT_CERT_FNAME "controlkey/laptop.crt"
@@ -19,7 +15,7 @@ static volatile int networkActive = 0;
 void handleError(const char *buffer) {
     switch (buffer[1]) {
         case RESP_OK:
-            printf("Command / Status OK\n");
+            // printf("Command / Status OK\n");
             break;
 
         case RESP_BAD_PACKET:
@@ -47,21 +43,10 @@ void handleStatus(const char *buffer) {
     int32_t data[16];
     memcpy(data, &buffer[1], sizeof(data));
 
-    printf("\n ------- ALEX STATUS REPORT ------- \n\n");
-    printf("Left Forward Ticks:\t\t%d\n", data[0]);
-    printf("Right Forward Ticks:\t\t%d\n", data[1]);
-    printf("Left Reverse Ticks:\t\t%d\n", data[2]);
-    printf("Right Reverse Ticks:\t\t%d\n", data[3]);
-    printf("Left Forward Ticks Turns:\t%d\n", data[4]);
-    printf("Right Forward Ticks Turns:\t%d\n", data[5]);
-    printf("Left Reverse Ticks Turns:\t%d\n", data[6]);
-    printf("Right Reverse Ticks Turns:\t%d\n", data[7]);
-    printf("Forward Distance:\t\t%d\n", data[8]);
-    printf("Reverse Distance:\t\t%d\n", data[9]);
-    printf("\n---------------------------------------\n\n");
+    printf("\r\ncolor: %s\r\n", data[0] ? "red" : "green");
 }
 
-void handleMessage(const char *buffer) { printf("MESSAGE FROM ALEX: %s\n", &buffer[1]); }
+void handleMessage(const char *buffer) { printf("\r\nMESSAGE FROM ALEX: %s\r\n", &buffer[1]); }
 
 void handleCommand(const char *buffer) {
     // We don't do anything because we issue commands
@@ -94,7 +79,6 @@ void handleNetwork(const char *buffer, int len) {
 
 void sendData(void *conn, const char *buffer, int len) {
     int c;
-    printf("\nSENDING %d BYTES DATA\n\n", len);
     if (networkActive) {
         c = sslWrite(conn, buffer, len);
         networkActive = (c > 0);
@@ -107,7 +91,6 @@ void *readerThread(void *conn) {
 
     while (networkActive) {
         len = sslRead(conn, buffer, sizeof(buffer));
-        printf("read %d bytes from server.\n", len);
 
         networkActive = (len > 0);
 
@@ -119,64 +102,34 @@ void *readerThread(void *conn) {
     EXIT_THREAD(conn);
 }
 
-void flushInput() {
-    char c;
-
-    while ((c = getchar()) != '\n' && c != EOF)
-        ;
-}
-
-void getParams(int32_t *params) {
-    printf(
-        "Enter distance/angle in cm/degrees (e.g. 50) and power in %% (e.g. 75) separated by "
-        "space.\n");
-    printf(
-        "E.g. 50 75 means go at 50 cm at 75%% power for forward/backward, or 50 degrees left or "
-        "right turn at 75%%  power\n");
-    scanf("%d %d", &params[0], &params[1]);
-    flushInput();
-}
-
 void *writerThread(void *conn) {
     int quit = 0;
 
+    initscr();
+    printf("Command (WASD, f=scan q=exit)\n");
+
     while (!quit) {
         char ch;
-        printf(
-            "Command (f=forward, b=reverse, l=turn left, r=turn right, s=stop, c=clear stats, "
-            "g=get stats q=exit)\n");
-        scanf("%c", &ch);
+        ch = getch();
 
-        // Purge extraneous characters from input stream
-        flushInput();
-
-        char buffer[10];
-        int32_t params[2];
+        char buffer[2];
 
         buffer[0] = NET_COMMAND_PACKET;
         switch (ch) {
-            case 'f':
-            case 'F':
-            case 'b':
-            case 'B':
-            case 'l':
-            case 'L':
-            case 'r':
-            case 'R':
-                getParams(params);
-                buffer[1] = ch;
-                memcpy(&buffer[2], params, sizeof(params));
-                sendData(conn, buffer, sizeof(buffer));
-                break;
+            case 'w':
+            case 'W':
+            case 'a':
+            case 'A':
             case 's':
             case 'S':
-            case 'c':
-            case 'C':
-            case 'g':
-            case 'G':
-                params[0] = 0;
-                params[1] = 0;
-                memcpy(&buffer[2], params, sizeof(params));
+            case 'd':
+            case 'D':
+            case 'x':
+                buffer[1] = ch;
+                sendData(conn, buffer, sizeof(buffer));
+                break;
+            case 'f':
+            case 'F':
                 buffer[1] = ch;
                 sendData(conn, buffer, sizeof(buffer));
                 break;
@@ -187,10 +140,13 @@ void *writerThread(void *conn) {
             default:
                 printf("BAD COMMAND\n");
         }
+        flushinp();
+        usleep(500000);
     }
 
     printf("Exiting keyboard thread\n");
 
+    endwin();
     stopClient();
     EXIT_THREAD(conn);
 }

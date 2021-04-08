@@ -15,9 +15,5 @@ typedef struct
 	uint32_t params[16];
 } TPacket;
 
-//typedef struct
-//{
-//  char letter;
-//} TPacket;
 
 #endif
