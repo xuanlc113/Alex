@@ -235,7 +235,7 @@ void setup() {
     cli();
     setupSerial();
     setupMotors();
-    // setupColorSensor();
+     setupColorSensor();
     sei();
 }
 
@@ -255,18 +255,20 @@ void handlePacket(TPacket *packet) {
             break;
 
         case PACKET_TYPE_HELLO:
+            sendOK();
             break;
     }
 }
 
 void loop() {
+    //  forward();
     TPacket recvPacket;  // This holds commands from the Pi
 
     TResult result = readPacket(&recvPacket);
 
-    if (result == PACKET_OK)
+    if (result == PACKET_OK) {
         handlePacket(&recvPacket);
-    else if (result == PACKET_BAD) {
+    } else if (result == PACKET_BAD) {
         sendBadPacket();
     } else if (result == PACKET_CHECKSUM_BAD) {
         sendBadChecksum();
