@@ -29,7 +29,7 @@ Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS3472
 //}
 
 void setupColorSensor() {
-    Serial.begin(9600);
+    // Serial.begin(9600);
     // Serial.println("Color View Test!");
 
     if (tcs.begin()) {
@@ -72,7 +72,7 @@ void setupColorSensor() {
 }
 
 int senseColor() {
-  return 1;
+    return 1;
     float red, green, blue;
 
     tcs.setInterrupt(false);  // turn on LED

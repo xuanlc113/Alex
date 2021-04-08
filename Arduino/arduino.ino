@@ -27,7 +27,7 @@ void sendStatus() {
     TPacket statusPacket;
     statusPacket.packetType = PACKET_TYPE_RESPONSE;
     statusPacket.command = RESP_STATUS;
-    statusPacket.params[0] = 1; // senseColor();
+    statusPacket.params[0] = 1;  // senseColor();
     sendResponse(&statusPacket);
 }
 
@@ -224,7 +224,7 @@ void setup() {
     cli();
     setupSerial();
     setupMotors();
-    setupColorSensor();
+    //    setupColorSensor();
     sei();
 }
 
