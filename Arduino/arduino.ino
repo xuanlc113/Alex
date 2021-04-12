@@ -26,7 +26,7 @@ void sendStatus() {
     TPacket statusPacket;
     statusPacket.packetType = PACKET_TYPE_RESPONSE;
     statusPacket.command = RESP_STATUS;
-    statusPacket.params[0] = 1;  // senseColor();
+    statusPacket.params[0] = senseColor();
     sendResponse(&statusPacket);
 }
 
@@ -146,19 +146,19 @@ void reverse() {
 }
 
 void left() {
-    OCR0A = 128;
-    OCR0B = 128;
-    OCR2A = 148;
-    OCR2B = 148;
+    OCR0A = 140;
+    OCR0B = 140;
+    OCR2A = 160;
+    OCR2B = 160;
     TCCR0A = 0b10000001;
     TCCR2A = 0b10000001;
 }
 
 void right() {
-    OCR0A = 128;
-    OCR0B = 128;
-    OCR2A = 148;
-    OCR2B = 148;
+    OCR0A = 140;
+    OCR0B = 140;
+    OCR2A = 160;
+    OCR2B = 160;
     TCCR0A = 0b00100001;
     TCCR2A = 0b00100001;
 }
