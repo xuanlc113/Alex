@@ -1,4 +1,3 @@
-#include <Adafruit_TCS34725.h>
 #include <serialize.h>
 
 #include "colorsensor.h"
@@ -116,34 +115,50 @@ void setupMotors() {
     TCNT0 = 0;
     TIMSK0 |= 0b110;
     TCCR0A |= 0b1;
-    OCR0A = 128;
-    OCR0B = 128;
+    OCR0A = 180;
+    OCR0B = 180;
     TCCR0B = 0b00000011;
 
     TCNT2 = 0;
     TIMSK2 |= 0b110;
     TCCR2A |= 0b1;
-    OCR2A = 180;
-    OCR2B = 180;
+    OCR2A = 200;
+    OCR2B = 200;
     TCCR2B = 0b00000011;
 }
 
 void forward() {
-    TCCR0A = 0b10000001;
-    TCCR2A = 0b00100001;
-}
-
-void reverse() {
+    OCR0A = 180;
+    OCR0B = 180;
+    OCR2A = 200;
+    OCR2B = 200;
     TCCR0A = 0b00100001;
     TCCR2A = 0b10000001;
 }
 
+void reverse() {
+    OCR0A = 180;
+    OCR0B = 180;
+    OCR2A = 200;
+    OCR2B = 200;
+    TCCR0A = 0b10000001;
+    TCCR2A = 0b00100001;
+}
+
 void left() {
+    OCR0A = 128;
+    OCR0B = 128;
+    OCR2A = 148;
+    OCR2B = 148;
     TCCR0A = 0b10000001;
     TCCR2A = 0b10000001;
 }
 
 void right() {
+    OCR0A = 128;
+    OCR0B = 128;
+    OCR2A = 148;
+    OCR2B = 148;
     TCCR0A = 0b00100001;
     TCCR2A = 0b00100001;
 }
@@ -224,7 +239,7 @@ void setup() {
     cli();
     setupSerial();
     setupMotors();
-    //    setupColorSensor();
+    setupColorSensor();
     sei();
 }
 
