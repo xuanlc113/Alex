@@ -22,17 +22,58 @@ int redValue;
 int greenValue;
 int blueValue;
 
-void setupColorSensor() {
+void setup() {
+    // Set S0 - S3 as outputs
     pinMode(S0, OUTPUT);
     pinMode(S1, OUTPUT);
     pinMode(S2, OUTPUT);
     pinMode(S3, OUTPUT);
+
+    // Set Sensor output as input
     pinMode(sensorOut, INPUT);
 
+    // Set Frequency scaling to 20%
     digitalWrite(S0, HIGH);
     digitalWrite(S1, LOW);
+
+    // Setup Serial Monitor
+    Serial.begin(9600);
 }
 
+void loop() {
+    // Read Red value
+    redPW = getRedPW();
+    // Map to value from 0-255
+    redValue = map(redPW, redMin, redMax, 255, 0);
+    // Delay to stabilize sensor
+    delay(200);
+
+    // Read Green value
+    greenPW = getGreenPW();
+    // Map to value from 0-255
+    greenValue = map(greenPW, greenMin, greenMax, 255, 0);
+    // Delay to stabilize sensor
+    delay(200);
+
+    // Read Blue value
+    bluePW = getBluePW();
+    // Map to value from 0-255
+    blueValue = map(bluePW, blueMin, blueMax, 255, 0);
+    // Delay to stabilize sensor
+    delay(200);
+
+    // Print output to Serial Monitor
+    Serial.print("Red = ");
+    Serial.print(redValue);
+    Serial.print(" - Green = ");
+    Serial.print(greenValue);
+    Serial.print(" - Blue = ");
+    Serial.print(blueValue);
+    Serial.print(" ");
+    Serial.println(redValue - greenValue);
+}
+
+// Function to read Red Pulse Widths
 int getRedPW() {
     // Set sensor to read Red only
     digitalWrite(S2, LOW);
@@ -69,31 +110,4 @@ int getBluePW() {
     PW = pulseIn(sensorOut, LOW);
     // Return the value
     return PW;
-}
-
-int senseColor() {
-    redPW = getRedPW();
-    // Map to value from 0-255
-    redValue = map(redPW, redMin, redMax, 255, 0);
-    // Delay to stabilize sensor
-    delay(200);
-
-    // Read Green value
-    greenPW = getGreenPW();
-    // Map to value from 0-255
-    greenValue = map(greenPW, greenMin, greenMax, 255, 0);
-    // Delay to stabilize sensor
-    delay(200);
-
-    //   // Read Blue value
-    //   bluePW = getBluePW();
-    //   // Map to value from 0-255
-    //   blueValue = map(bluePW, blueMin,blueMax,255,0);
-
-    int diff = redValue - greenValue;
-    if (diff > 0) {
-        return 1;
-    } else {
-        return 0;
-    }
 }
