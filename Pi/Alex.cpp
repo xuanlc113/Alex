@@ -211,6 +211,12 @@ void handleCommand(void *conn, const char *buffer) {
             uartSendPacket(&commandPacket);
             break;
 
+        case 'c':
+        case 'C':
+            commandPacket.command = COMMAND_TOGGLE_SPEED;
+            uartSendPacket(&commandPacket);
+            break;
+
         default:
             printf("Bad command\n");
     }
