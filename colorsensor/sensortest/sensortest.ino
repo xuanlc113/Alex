@@ -22,20 +22,73 @@ int redValue;
 int greenValue;
 int blueValue;
 
+// Function to read Red Pulse Widths
+int getRedPW() {
+    // Set sensor to read Red only
+//    digitalWrite(S2, LOW);
+//    digitalWrite(S3, LOW);
+
+    PORTB &= ~(1 << 2);  // S2
+    PORTB &= ~(1 << 0);  // S3
+    // Define integer to represent Pulse Width
+    int PW;
+    // Read the output Pulse Width
+    PW = pulseIn(sensorOut, LOW);
+    // Return the value
+    return PW;
+}
+
+// Function to read Green Pulse Widths
+int getGreenPW() {
+    // Set sensor to read Green only
+//    digitalWrite(S2, HIGH);
+//    digitalWrite(S3, HIGH);
+
+    
+    PORTB |= (1 << 2);  // S2
+    PORTB |= (1 << 0);  // S3
+    // Define integer to represent Pulse Width
+    int PW;
+    // Read the output Pulse Width
+    PW = pulseIn(sensorOut, LOW);
+    // Return the value
+    return PW;
+}
+
+// Function to read Blue Pulse Widths
+int getBluePW() {
+    // Set sensor to read Blue only
+    digitalWrite(S2, LOW);
+    digitalWrite(S3, HIGH);
+    // Define integer to represent Pulse Width
+    int PW;
+    // Read the output Pulse Width
+    PW = pulseIn(sensorOut, LOW);
+    // Return the value
+    return PW;
+}
+
+
 void setup() {
     // Set S0 - S3 as outputs
-    pinMode(S0, OUTPUT);
-    pinMode(S1, OUTPUT);
-    pinMode(S2, OUTPUT);
-    pinMode(S3, OUTPUT);
+//    pinMode(S0, OUTPUT);
+//    pinMode(S1, OUTPUT);
+//    pinMode(S2, OUTPUT);
+//    pinMode(S3, OUTPUT);
+//
+//    // Set Sensor output as input
+//    pinMode(sensorOut, INPUT);
+//
+//    // Set Frequency scaling to 20%
+//    digitalWrite(S0, HIGH);
+//    digitalWrite(S1, LOW);
 
-    // Set Sensor output as input
-    pinMode(sensorOut, INPUT);
+    DDRD |= 0b10000100;
+    DDRB |= 0b00000101;
+    DDRB &= ~(1 << 1);
 
-    // Set Frequency scaling to 20%
-    digitalWrite(S0, HIGH);
-    digitalWrite(S1, LOW);
-
+    PORTD |= 1 << 7;
+    PORTD &= ~(1 << 2);
     // Setup Serial Monitor
     Serial.begin(9600);
 }
@@ -56,58 +109,19 @@ void loop() {
     delay(200);
 
     // Read Blue value
-    bluePW = getBluePW();
-    // Map to value from 0-255
-    blueValue = map(bluePW, blueMin, blueMax, 255, 0);
-    // Delay to stabilize sensor
-    delay(200);
+//    bluePW = getBluePW();
+//    // Map to value from 0-255
+//    blueValue = map(bluePW, blueMin, blueMax, 255, 0);
+//    // Delay to stabilize sensor
+//    delay(200);
 
     // Print output to Serial Monitor
     Serial.print("Red = ");
     Serial.print(redValue);
     Serial.print(" - Green = ");
     Serial.print(greenValue);
-    Serial.print(" - Blue = ");
-    Serial.print(blueValue);
+//    Serial.print(" - Blue = ");
+//    Serial.print(blueValue);
     Serial.print(" ");
     Serial.println(redValue - greenValue);
-}
-
-// Function to read Red Pulse Widths
-int getRedPW() {
-    // Set sensor to read Red only
-    digitalWrite(S2, LOW);
-    digitalWrite(S3, LOW);
-    // Define integer to represent Pulse Width
-    int PW;
-    // Read the output Pulse Width
-    PW = pulseIn(sensorOut, LOW);
-    // Return the value
-    return PW;
-}
-
-// Function to read Green Pulse Widths
-int getGreenPW() {
-    // Set sensor to read Green only
-    digitalWrite(S2, HIGH);
-    digitalWrite(S3, HIGH);
-    // Define integer to represent Pulse Width
-    int PW;
-    // Read the output Pulse Width
-    PW = pulseIn(sensorOut, LOW);
-    // Return the value
-    return PW;
-}
-
-// Function to read Blue Pulse Widths
-int getBluePW() {
-    // Set sensor to read Blue only
-    digitalWrite(S2, LOW);
-    digitalWrite(S3, HIGH);
-    // Define integer to represent Pulse Width
-    int PW;
-    // Read the output Pulse Width
-    PW = pulseIn(sensorOut, LOW);
-    // Return the value
-    return PW;
 }

@@ -23,20 +23,29 @@ int greenValue;
 int blueValue;
 
 void setupColorSensor() {
-    pinMode(S0, OUTPUT);
-    pinMode(S1, OUTPUT);
-    pinMode(S2, OUTPUT);
-    pinMode(S3, OUTPUT);
-    pinMode(sensorOut, INPUT);
+    // pinMode(S0, OUTPUT);
+    // pinMode(S1, OUTPUT);
+    // pinMode(S2, OUTPUT);
+    // pinMode(S3, OUTPUT);
+    // pinMode(sensorOut, INPUT);
 
-    digitalWrite(S0, HIGH);
-    digitalWrite(S1, LOW);
+    // digitalWrite(S0, HIGH);
+    // digitalWrite(S1, LOW);
+    DDRD |= 0b10000100;
+    DDRB |= 0b00000101;
+    DDRB &= ~(1 << 1);
+
+    PORTD |= 1 << 7;
+    PORTD &= ~(1 << 2);
 }
 
 int getRedPW() {
     // Set sensor to read Red only
-    digitalWrite(S2, LOW);
-    digitalWrite(S3, LOW);
+    // digitalWrite(S2, LOW);
+    // digitalWrite(S3, LOW);
+
+    PORTB &= ~(1 << 2);  // S2
+    PORTB &= ~(1 << 0);  // S3
     // Define integer to represent Pulse Width
     int PW;
     // Read the output Pulse Width
@@ -48,8 +57,11 @@ int getRedPW() {
 // Function to read Green Pulse Widths
 int getGreenPW() {
     // Set sensor to read Green only
-    digitalWrite(S2, HIGH);
-    digitalWrite(S3, HIGH);
+    // digitalWrite(S2, HIGH);
+    // digitalWrite(S3, HIGH);
+
+    PORTB |= (1 << 2);  // S2
+    PORTB |= (1 << 0);  // S3
     // Define integer to represent Pulse Width
     int PW;
     // Read the output Pulse Width
@@ -59,17 +71,17 @@ int getGreenPW() {
 }
 
 // Function to read Blue Pulse Widths
-int getBluePW() {
-    // Set sensor to read Blue only
-    digitalWrite(S2, LOW);
-    digitalWrite(S3, HIGH);
-    // Define integer to represent Pulse Width
-    int PW;
-    // Read the output Pulse Width
-    PW = pulseIn(sensorOut, LOW);
-    // Return the value
-    return PW;
-}
+// int getBluePW() {
+//     // Set sensor to read Blue only
+//     digitalWrite(S2, LOW);
+//     digitalWrite(S3, HIGH);
+//     // Define integer to represent Pulse Width
+//     int PW;
+//     // Read the output Pulse Width
+//     PW = pulseIn(sensorOut, LOW);
+//     // Return the value
+//     return PW;
+// }
 
 int senseColor() {
     redPW = getRedPW();
@@ -91,7 +103,7 @@ int senseColor() {
     //   blueValue = map(bluePW, blueMin,blueMax,255,0);
 
     int diff = redValue - greenValue;
-    if (diff > 0) {
+    if (diff > 500) {
         return 1;
     } else {
         return 0;

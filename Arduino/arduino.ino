@@ -129,8 +129,8 @@ ISR(TIMER2_COMPB_vect) {}
 // right: 5, 6, TIMER 0
 // left: 3, 11, TIMER 2
 void setupMotors() {
-    DDRB = 0b00001000;
-    DDRD = 0b01101000;
+    DDRB |= 0b00001000;
+    DDRD |= 0b01101000;
 
     TCNT0 = 0;
     TIMSK0 |= 0b110;
