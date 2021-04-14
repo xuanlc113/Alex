@@ -1,4 +1,3 @@
-//#include <NewPing.h>
 #include <serialize.h>
 
 #include "colorsensor.h"
@@ -6,7 +5,7 @@
 #include "packet.h"
 
 #define MAX_DISTANCE 300
-#define sonarfstop 130
+#define sonarfstop 110
 #define sonarbstop 180
 #define sonarffaststop 200
 
@@ -17,8 +16,8 @@
 unsigned long mikrosb, lastEchob = 0UL;
 unsigned long echobdist;
 
-#define echof A4
-#define triggerf A5
+#define echof A2
+#define triggerf A3
 unsigned long mikrosf, lastEchof = 0UL;
 unsigned long echofdist;
 
@@ -155,10 +154,10 @@ void forward() {
             OCR2A = 250;
             OCR2B = 250;
         } else {
-            OCR0A = 175;
-            OCR0B = 175;
-            OCR2A = 180;
-            OCR2B = 180;
+            OCR0A = 165;
+            OCR0B = 165;
+            OCR2A = 170;
+            OCR2B = 170;
         }
         TCCR0A = 0b00100001;
         TCCR2A = 0b10000001;
@@ -168,10 +167,10 @@ void forward() {
 
 void reverse() {
     if (echobdist >= sonarbstop) {
-        OCR0A = 175;
-        OCR0B = 175;
-        OCR2A = 180;
-        OCR2B = 180;
+        OCR0A = 165;
+        OCR0B = 165;
+        OCR2A = 170;
+        OCR2B = 170;
         TCCR0A = 0b10000001;
         TCCR2A = 0b00100001;
         currentDirection = REVERSE;
@@ -179,20 +178,20 @@ void reverse() {
 }
 
 void left() {
-    OCR0A = 120;
-    OCR0B = 120;
-    OCR2A = 140;
-    OCR2B = 140;
+    OCR0A = 140;  // 120
+    OCR0B = 140;
+    OCR2A = 160;  // 140
+    OCR2B = 160;
     TCCR0A = 0b10000001;
     TCCR2A = 0b10000001;
     currentDirection = LEFT;
 }
 
 void right() {
-    OCR0A = 120;
-    OCR0B = 120;
-    OCR2A = 140;
-    OCR2B = 140;
+    OCR0A = 140;  // 120
+    OCR0B = 140;
+    OCR2A = 160;  // 140
+    OCR2B = 160;
     TCCR0A = 0b00100001;
     TCCR2A = 0b00100001;
     currentDirection = RIGHT;
@@ -300,7 +299,6 @@ void setup() {
     pinMode(echof, INPUT);
     digitalWrite(triggerf, LOW);
     pinMode(triggerf, OUTPUT);
-    Serial.begin(9600);
 }
 
 void handlePacket(TPacket *packet) {
