@@ -2,18 +2,18 @@
 #define __CONSTANTS_INC__
 
 /*
-    This file containts all the packet types, commands
-    and status constants
-
-*/
+ *  This file containts all the packet types, commands
+ *  and status constants
+ *
+ */
 
 // Packet types
 typedef enum {
-  PACKET_TYPE_COMMAND = 0,
-  PACKET_TYPE_RESPONSE = 1,
-  PACKET_TYPE_ERROR = 2,
-  PACKET_TYPE_MESSAGE = 3,
-  PACKET_TYPE_HELLO = 4
+    PACKET_TYPE_COMMAND = 0,
+    PACKET_TYPE_RESPONSE = 1,
+    PACKET_TYPE_ERROR = 2,
+    PACKET_TYPE_MESSAGE = 3,
+    PACKET_TYPE_HELLO = 4
 } TPacketType;
 
 // Response types. This goes into the command field
