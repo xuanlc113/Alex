@@ -3,8 +3,7 @@ cmake_minimum_required (VERSION 2.8.8 FATAL_ERROR)
 # Examples
 set (VL53L0X_EXAMPLES
 	single
-	singleMinimal
-	continuousMultipleSensors
+	client
 )
 
 foreach (example ${VL53L0X_EXAMPLES})
