@@ -1,0 +1,3 @@
+<robot name="model">
+	<link name="my_link" />
+</robot>

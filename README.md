@@ -1,7 +1,5 @@
 # CG1112 Group B01-1A
 
-How to use:
-
 ## Arduino
 
 Upload Arduino.ino to Arduino Uno board
@@ -18,7 +16,7 @@ make
 
 ### Hump Detector Client
 
-run this after Hump Detector Server is running.
+run this after Hump Detector Server is running<br/>
 humpDetector/cliffSensor/examples/client.cpp needs to be modified in line 30 to reference the ip address of Hump Detector Server (laptop ip address)
 
 ```
@@ -29,6 +27,13 @@ make
 ```
 
 ### ROS
+
+modify hosts and bashrc config file accordingly
+
+```
+cd catkin_ws
+roslaunch rplidar_ros rplidar.launch
+```
 
 ## Laptop
 
@@ -49,3 +54,10 @@ gcc server.cpp -o server
 ```
 
 ### Hector Slam
+
+run after ros runs in Pi
+
+```
+cd catkin_ws
+roslaunch rplidar_ros view_slam.launch
+```
