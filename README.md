@@ -105,5 +105,5 @@ catkin_make
 5. run view_slam.launch:
 
 ```
-roslaunch rplidar_ros view_slam.launch
+roslaunch rplidar_ros rplidar.launch
 ```
