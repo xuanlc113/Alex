@@ -2,8 +2,8 @@
 127.0.0.1	localhost
 127.0.1.1	<Linux Machine Name>
 
-<Linux Machine IP> <Linux Machine Name>
-<Pi IP> <Pi Name>
+<Linux Machine IP> <Linux Machine Name> e.g 192.168.2.2 My-Linux
+<Pi IP> <Pi Name> e.g 127.0.1.1	pi
 # The following lines are desirable for IPv6 capable hosts
 ::1     ip6-localhost ip6-loopback
 fe00::0 ip6-localnet

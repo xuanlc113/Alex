@@ -28,6 +28,7 @@ make
 
 ### ROS
 
+Place hosts file in Pi root directory<br/>
 modify hosts and bashrc config file accordingly
 
 1. Modify bashrc:
@@ -47,7 +48,7 @@ sudo nano /etc/hosts
 4. catkin_make repo:
 
 ```
-cd catkin_ws
+cd ros_pi
 catkin_make
 ```
 
@@ -77,6 +78,7 @@ gcc server.cpp -o server
 
 ### Hector Slam
 
+Place hosts and bashrc config file in Linux root directory<br/>
 run after ros runs in Pi
 
 1. Modify bashrc:
@@ -96,7 +98,7 @@ sudo nano /etc/hosts
 4. catkin_make repo:
 
 ```
-cd catkin_ws
+cd ros_laptop
 catkin_make
 ```
 
