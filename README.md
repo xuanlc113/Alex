@@ -30,9 +30,31 @@ make
 
 modify hosts and bashrc config file accordingly
 
+1. Modify bashrc:
+
+```
+sudo nano ~/.bashrc
+```
+
+2. Modify hosts file:
+
+```
+sudo nano /etc/hosts
+```
+
+3. Restart terminal
+
+4. catkin_make repo:
+
 ```
 cd catkin_ws
-roslaunch rplidar_ros rplidar.launch
+catkin_make
+```
+
+5. run view_slam.launch:
+
+```
+roslaunch rplidar_ros view_slam.launch
 ```
 
 ## Laptop
@@ -57,7 +79,29 @@ gcc server.cpp -o server
 
 run after ros runs in Pi
 
+1. Modify bashrc:
+
+```
+sudo nano ~/.bashrc
+```
+
+2. Modify hosts file:
+
+```
+sudo nano /etc/hosts
+```
+
+3. Restart terminal
+
+4. catkin_make repo:
+
 ```
 cd catkin_ws
+catkin_make
+```
+
+5. run view_slam.launch:
+
+```
 roslaunch rplidar_ros view_slam.launch
 ```
